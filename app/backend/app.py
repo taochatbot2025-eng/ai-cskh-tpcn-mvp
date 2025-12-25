@@ -61,11 +61,6 @@ def build_handoff(user_text: str, intent: str):
         return r
     return None
 
-@app.get("/warm")
-def warm():
-    # lightweight warm-up endpoint for Render cold start mitigation
-    return {"ok": True}
-    
 @app.get("/health")
 def health():
     return {"ok": True, "profile": profile.get("profile_id"), "data_dir": DATA_DIR}

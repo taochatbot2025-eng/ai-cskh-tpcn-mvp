@@ -627,19 +627,19 @@
   const statusEl = document.getElementById("status");
 
   function openChat(){
-    overlay.classList.add("show");
-    setTimeout(() => txt.focus(), 50);
+    if(overlay) overlay.classList.add("show");
+    setTimeout(() => { try{ txt && txt.focus(); }catch(_){ } }, 50);
     ping();
   }
   function closeChat(){
     overlay.classList.remove("show");
   }
-  btnOpen.onclick = openChat;
-  btnOpenTop.onclick = openChat;
-  btnOpenHero.onclick = openChat;
-  btnClose.onclick = closeChat;
+  if(btnOpen) btnOpen.addEventListener("click", openChat);
+  if(btnOpenTop) btnOpenTop.addEventListener("click", openChat);
+  if(btnOpenHero) btnOpenHero.addEventListener("click", openChat);
+  if(btnClose) btnClose.addEventListener("click", closeChat);
 
-  overlay.addEventListener("click", (e)=>{
+  if(overlay) overlay.addEventListener("click", (e)=>{
     if(e.target === overlay) closeChat();
   });
 
@@ -660,54 +660,7 @@
     s = s.replace(/\n/g, "<br>");
     return s;
   }
-  
-  /* COMMERCIAL_RECOVERY_v1 */
-  const GREET_RE = /^(\s)*(chào|hello|hi|xin chào|alo|a lô|hey|chao)(\s|!|\.|,|\?)*$/i;
-
-  function isGreetingOnly(s){
-    const t = String(s||"").trim();
-    if(!t) return false;
-    return GREET_RE.test(t);
-  }
-
-  async function warmUp(){
-    // warm backend to avoid Render cold start
-    try{
-      await fetch(API + "/warm", { method:"GET", cache:"no-store" });
-    }catch(_){
-      try{ await fetch(API + "/health", { method:"GET", cache:"no-store" }); }catch(__){}
-    }
-  }
-
-  async function fetchChatWithRetry(payload, tries=2){
-    let lastErr = null;
-    for(let k=0;k<=tries;k++){
-      try{
-        const ctrl = new AbortController();
-        const t = setTimeout(()=>ctrl.abort(), 20000); // 20s timeout
-        const res = await fetch(API + "/chat", {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify(payload),
-          signal: ctrl.signal
-        });
-        clearTimeout(t);
-        if(!res.ok){
-          const txt = await res.text().catch(()=> "");
-          throw new Error("HTTP " + res.status + " " + txt.slice(0,120));
-        }
-        return await res.json();
-      }catch(e){
-        lastErr = e;
-        // small backoff + warm
-        await warmUp();
-        await new Promise(r=>setTimeout(r, 800 + 600*k));
-      }
-    }
-    throw lastErr || new Error("network");
-  }
-
-function add(role, content, ctas){
+  function add(role, content, ctas){
     const row = document.createElement("div");
     row.className = "msg " + (role === "me" ? "me" : "bot");
     const b = document.createElement("div");
@@ -775,55 +728,28 @@ function add(role, content, ctas){
     return v;
   }
 
-  
   async function send(){
     const m = txt.value.trim();
     if(!m) return;
-
-    // If user just greets, respond locally (no API call)
-    if(isGreetingOnly(m)){
-      add("me", m);
-      txt.value = "";
-      add("bot", "Dạ em chào anh 😊 Anh đang muốn tư vấn theo vấn đề nào ạ? (dạ dày/đường huyết/mỡ máu/gan/xương khớp/giấc ngủ)", []);
-      txt.focus();
-      return;
-    }
-
     add("me", m);
     txt.value = "";
     btnSend.disabled = true;
-
-    // typing indicator
-    typingEl = document.createElement("div");
-    typingEl.className = "msg bot";
-    const bub = document.createElement("div");
-    bub.className = "bubble typing";
-    bub.textContent = "⏳ Đang kết nối & phân tích...";
-    typingEl.appendChild(bub);
-    chat.appendChild(typingEl);
-    chat.scrollTop = chat.scrollHeight;
+    showThinking(true);
 
     try{
-      // warm first to mitigate cold start
-      await warmUp();
-      const data = await fetchChatWithRetry({ message: m }, 2);
-
-      if(typingEl && typingEl.parentNode){ typingEl.remove(); typingEl = null; }
-      add("bot", data.reply || "Dạ em đã nhận được. Anh cho em thêm 1 thông tin nhỏ để tư vấn chính xác hơn nhé ạ.", data.ctas || []);
+      const res = await fetch(API + "/chat", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ message: m, session_id: getSessionId() })
+      });
+      const data = await res.json();
+      showThinking(false);
+      add("bot", data.reply || "Dạ em chưa nhận được phản hồi hợp lệ. Anh/chị thử lại giúp em nhé ạ.");
     }catch(e){
-      if(typingEl && typingEl.parentNode){ typingEl.remove(); typingEl = null; }
-      // Commercial-safe recovery message (no "lỗi")
-      add("bot",
-        "Dạ em đang gặp trễ kết nối hệ thống một chút ⏳ Anh giúp em bấm **Gửi** lại câu hỏi vừa rồi nhé (hoặc đợi 3–5 giây em tự kết nối lại).",
-        []
-      );
+      showThinking(false);
+      add("bot", "Dạ hệ thống đang bận hoặc lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
     }finally{
       btnSend.disabled = false;
-      txt.focus();
-    }
-  }
-
-  btnSend.disabled = false;
       txt.focus();
     }
   }
