@@ -793,7 +793,7 @@ function add(role, content, ctas){
 
     add("me", m);
     txt.value = "";
-    btn.disabled = true;
+    btnSend.disabled = true;
 
     // typing indicator
     typingEl = document.createElement("div");
@@ -820,19 +820,12 @@ function add(role, content, ctas){
         []
       );
     }finally{
-      btn.disabled = false;
+      btnSend.disabled = false;
       txt.focus();
     }
   }
-);
-      const data = await res.json();
-      showThinking(false);
-      add("bot", data.reply || "Dạ em chưa nhận được phản hồi hợp lệ. Anh/chị thử lại giúp em nhé ạ.");
-    }catch(e){
-      showThinking(false);
-      add("bot", "Dạ hệ thống đang bận hoặc lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
-    }finally{
-      btnSend.disabled = false;
+
+  btnSend.disabled = false;
       txt.focus();
     }
   }
