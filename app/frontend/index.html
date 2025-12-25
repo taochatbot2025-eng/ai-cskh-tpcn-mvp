@@ -634,10 +634,12 @@
 
   const ctaBar = document.getElementById("ctaBar");
 
-  function updateCtas(ctas){
+  function updateCtas(ctas, stage){
     if(!ctaBar) return;
     ctaBar.innerHTML = "";
+    const st = String(stage||"");
     const list = Array.isArray(ctas) ? ctas : [];
+    if(st==="identify"){ ctaBar.style.display="none"; return; }
     if(!list.length){ ctaBar.style.display = "none"; return; }
     list.forEach((c, i) => {
       const a = document.createElement(c.action === "link" ? "a" : "button");
@@ -788,6 +790,7 @@
       const data = await res.json();
       showThinking(false);
       add("bot", data.reply || "Dạ em chưa nhận được phản hồi hợp lệ. Anh/chị thử lại giúp em nhé ạ.");
+      try{ updateCtas((data.meta&&data.meta.ctas)||[], (data.meta&&data.meta.stage)||""); }catch(_){ }
     }catch(e){
       showThinking(false);
       add("bot", "Dạ hệ thống đang bận hoặc lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
@@ -807,7 +810,7 @@
 
   btnClear.onclick = () => {
     chat.innerHTML = "";
-    updateCtas([]);
+    updateCtas([],"identify");
     add("bot","Dạ em chào anh/chị 😊 Em là **Trợ lý AI tư vấn TPCN thiên nhiên**. Anh/chị đang quan tâm nhóm nào ạ (dạ dày/đường huyết/mỡ máu/gan/xương khớp/giấc ngủ…)?");
   };
 

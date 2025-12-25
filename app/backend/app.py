@@ -250,6 +250,13 @@ def chat():
     if AGENT_MODE != "0":
         intent_json = extract_intent(user_text=user_text, ctx=ctx, meta=store.meta, profile_mode=PROFILE_MODE)
 
+        # prevent looping clarify: only ask clarify once, then proceed with best effort
+        try:
+            if bool(intent_json.get("need_clarify")) and int(ctx.get("clarify_rounds",0) or 0) >= 1:
+                intent_json["need_clarify"] = False
+        except Exception:
+            pass
+
         # if previous turn asked clarify, merge user answer
         # (very lightweight: store pending_questions; agent will re-extract with ctx)
         if ctx.get("pending_clarify"):
@@ -261,13 +268,15 @@ def chat():
             memory_store.update(session_id, {
                 "turns": turns + 1,
                 "pending_clarify": True,
+                "clarify_rounds": int(ctx.get("clarify_rounds",0) or 0) + 1,
                 "problem_key": intent_json.get("problem_key") or ctx.get("problem_key",""),
                 "last_intent": intent_json.get("intent","unknown"),
                 "tone": intent_json.get("tone","friendly"),
             })
             # Ask as 1 message (natural)
             reply = "Dạ em hỏi nhanh 1–2 ý để tư vấn đúng hơn ạ:\n- " + "\n- ".join(qs)
-            return jsonify({"reply": reply}), 200
+            topic_key2 = _detect_topic_key(user_text) or str(intent_json.get("problem_key") or ctx.get("problem_key") or "")
+            return jsonify({"reply": reply, "meta": {"topic": topic_key2, "pronoun": ctx.get("pronoun","anh/chị"), "stage": "identify", "ctas": []}}), 200
 
         # tool use
         intent = (intent_json.get("intent") or "unknown").strip()
