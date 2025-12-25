@@ -96,9 +96,9 @@ def chat():
                 "last_intent": intent_json.get("intent","unknown"),
                 "tone": intent_json.get("tone","friendly"),
             })
-            # Ask as 1 message (natural)
+            # Ask as 1 message (natural) — NO CTA in clarify turn
             reply = "Dạ em hỏi nhanh 1–2 ý để tư vấn đúng hơn ạ:\n- " + "\n- ".join(qs)
-            return jsonify({"reply": reply, "topic": topic_key, "ctas": ctas}), 200
+            return jsonify({"reply": reply, "topic": "general", "ctas": []}), 200
 
         # tool use
         intent = (intent_json.get("intent") or "unknown").strip()
@@ -166,7 +166,7 @@ def chat():
             "last_intent": intent,
             "tone": intent_json.get("tone","friendly"),
         })
-        return jsonify({"reply": reply}), 200
+        return jsonify({"reply": reply, "topic": topic_key, "ctas": ctas}), 200
 
     # ---- FALLBACK (legacy router) ----
     intent, problem = router.classify(user_text)
@@ -210,7 +210,7 @@ def chat():
     except Exception as e:
         # graceful fallback
         reply = "Dạ hệ thống đang bận một chút. Anh/chị cho em xin SĐT để bên em hỗ trợ nhanh qua hotline nhé ạ 😊"
-    return jsonify({"reply": reply}), 200
+    return jsonify({"reply": reply, "topic": topic_key, "ctas": ctas}), 200
 
 # Serve frontend for quick demo (optional)
 @app.get("/")

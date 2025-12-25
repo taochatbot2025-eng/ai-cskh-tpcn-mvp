@@ -1,0 +1,80 @@
+[
+  {
+    "id": "combo_dd",
+    "slug": "da-day",
+    "name": "Combo Dạ dày – Trào ngược",
+    "price": "990.000đ",
+    "old_price": "1.120.000đ",
+    "link": "https://example.com/combo02",
+    "benefit": "Hỗ trợ tiêu hoá, giảm khó chịu vùng thượng vị.",
+    "use": "Tuỳ cơ địa, nên dùng tối thiểu 4–8 tuần để đánh giá. Không cam kết kết quả.",
+    "products": [
+      {
+        "name": "Sản phẩm A (Dạ dày)",
+        "price": "490.000đ",
+        "link": "https://example.com/spA",
+        "benefit": "Hỗ trợ niêm mạc dạ dày.",
+        "use": "Uống theo hướng dẫn trên nhãn."
+      },
+      {
+        "name": "Sản phẩm B (Men tiêu hoá)",
+        "price": "350.000đ",
+        "link": "https://example.com/spB",
+        "benefit": "Hỗ trợ tiêu hoá.",
+        "use": "Uống theo hướng dẫn trên nhãn."
+      }
+    ]
+  },
+  {
+    "id": "combo_td",
+    "slug": "tieu-duong",
+    "name": "Combo Ổn định đường huyết",
+    "price": "1.250.000đ",
+    "old_price": "1.410.000đ",
+    "link": "https://example.com/combo01",
+    "benefit": "Hỗ trợ ổn định đường huyết, hỗ trợ chuyển hoá.",
+    "use": "Tuỳ cơ địa, nên dùng tối thiểu 8–12 tuần để đánh giá. Không cam kết kết quả.",
+    "products": [
+      {
+        "name": "Viên hỗ trợ đường huyết",
+        "price": "790.000đ",
+        "link": "https://example.com/sp001",
+        "benefit": "Hỗ trợ ổn định đường huyết.",
+        "use": "Uống theo hướng dẫn trên nhãn."
+      },
+      {
+        "name": "Omega 3 hỗ trợ tim mạch",
+        "price": "490.000đ",
+        "link": "https://example.com/sp002",
+        "benefit": "Hỗ trợ tim mạch.",
+        "use": "Uống theo hướng dẫn trên nhãn."
+      }
+    ]
+  },
+  {
+    "id": "combo_mm",
+    "slug": "mo-mau",
+    "name": "Combo Mỡ máu – Tim mạch",
+    "price": "1.090.000đ",
+    "old_price": "1.240.000đ",
+    "link": "https://example.com/combo03",
+    "benefit": "Hỗ trợ mỡ máu, hỗ trợ tim mạch.",
+    "use": "Tuỳ cơ địa, nên dùng tối thiểu 8–12 tuần để đánh giá. Không cam kết kết quả.",
+    "products": [
+      {
+        "name": "Tinh dầu omega",
+        "price": "490.000đ",
+        "link": "https://example.com/sp003",
+        "benefit": "Hỗ trợ tim mạch.",
+        "use": "Uống theo hướng dẫn trên nhãn."
+      },
+      {
+        "name": "Hỗ trợ mỡ máu",
+        "price": "620.000đ",
+        "link": "https://example.com/sp004",
+        "benefit": "Hỗ trợ chỉ số mỡ máu.",
+        "use": "Uống theo hướng dẫn trên nhãn."
+      }
+    ]
+  }
+]
