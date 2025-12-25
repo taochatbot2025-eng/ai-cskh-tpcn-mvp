@@ -3,22 +3,23 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>AI CSKH TPCN – Demo</title>
+  <title>Hệ sinh thái TPCN thiên nhiên • Tư vấn cùng AI</title>
+  <meta name="description" content="Landing page giới thiệu hệ sinh thái thực phẩm chức năng thiên nhiên. Tư vấn nhanh cùng Trợ lý AI (CSKH + bán hàng)."/>
   <style>
     :root{
-      --bg:#0b1220;
-      --text:#e6eefc;
-      --muted:rgba(230,238,252,.72);
-      --line:rgba(255,255,255,.10);
-      --chip:rgba(255,255,255,.05);
-      --chipLine:rgba(255,255,255,.12);
-      --meBg:rgba(96,165,250,.20);
-      --meLine:rgba(96,165,250,.30);
-      --botBg:rgba(255,255,255,.06);
-      --botLine:rgba(255,255,255,.10);
-      --btn:#1b2a4a;
-      --btnLine:rgba(255,255,255,.18);
-      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      /* Natural TPCN palette 🌿 */
+      --bg: #f6f8f3;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line: rgba(17,24,39,.10);
+
+      --primary:#2f6f4e;
+      --primary2:#24563c;
+      --accent:#6fbf8f;
+      --soft:#eef6f0;
+
+      --shadow: 0 20px 60px rgba(17,24,39,.12);
       --r:18px;
     }
     *{box-sizing:border-box}
@@ -26,314 +27,715 @@
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 600px at 20% -10%, rgba(96,165,250,.18), transparent 55%),
-                  radial-gradient(900px 500px at 90% 0%, rgba(167,139,250,.14), transparent 55%),
-                  var(--bg);
       color:var(--text);
+      background:
+        radial-gradient(900px 500px at 10% -10%, rgba(111,191,143,.20), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(47,111,78,.12), transparent 55%),
+        var(--bg);
+    }
+    a{color:inherit}
+    .container{
+      width:min(1120px, calc(100% - 32px));
+      margin:0 auto;
     }
 
-    .page{
-      min-height:100%;
-      display:flex;
-      justify-content:center;
-      padding: clamp(12px, 2.5vw, 22px);
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    /* ===== Header ===== */
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter: blur(10px);
+      background: rgba(246,248,243,.78);
+      border-bottom: 1px solid var(--line);
     }
-
-    .shell{
-      width:min(980px, 100%);
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .topbar{
+    .nav{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
-      padding:14px 16px;
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+      gap:14px;
+      padding:14px 0;
     }
     .brand{
-      display:flex; align-items:center; gap:12px;
-      min-width:0;
-    }
-    .logo{
-      width:34px; height:34px; border-radius:12px;
-      display:grid; place-items:center;
-      background: rgba(96,165,250,.18);
-      border:1px solid rgba(96,165,250,.26);
-      font-weight:800;
-    }
-    .title{
-      display:flex; flex-direction:column; gap:2px; min-width:0;
-    }
-    .title b{font-size:14px; letter-spacing:.2px}
-    .title span{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-    .actions{
-      display:flex; align-items:center; gap:10px;
-    }
-    .pill{
-      font-size:12px;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      color:var(--text);
+      display:flex; align-items:center; gap:10px; min-width:0;
       text-decoration:none;
     }
+    .logo{
+      width:38px;height:38px;border-radius:14px;
+      display:grid;place-items:center;
+      background: linear-gradient(180deg, rgba(47,111,78,.18), rgba(111,191,143,.18));
+      border:1px solid rgba(47,111,78,.20);
+      font-weight:900;
+      letter-spacing:.3px;
+    }
+    .brandText{display:flex; flex-direction:column; gap:2px; min-width:0}
+    .brandText b{font-size:14px}
+    .brandText span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+    .navRight{display:flex; gap:10px; align-items:center}
+    .pill{
+      font-size:12px;
+      padding:9px 11px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.60);
+      text-decoration:none;
+      color:var(--text);
+    }
+    .btn{
+      border:0;
+      cursor:pointer;
+      padding:10px 14px;
+      border-radius:999px;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      color:#fff;
+      font-weight:800;
+      box-shadow: 0 10px 24px rgba(47,111,78,.18);
+      display:flex; align-items:center; gap:8px;
+      white-space:nowrap;
+    }
+    .btn:active{transform: translateY(1px);}
+    .btn svg{width:16px;height:16px}
+
+    /* ===== Hero ===== */
+    .hero{
+      padding:44px 0 16px;
+    }
+    .heroGrid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .heroCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.78));
       border:1px solid var(--line);
       border-radius: var(--r);
       box-shadow: var(--shadow);
-      overflow:hidden;
-      backdrop-filter: blur(10px);
+      padding:22px;
+    }
+    .kicker{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      background: var(--soft);
+      border:1px solid rgba(47,111,78,.15);
+      color: rgba(47,111,78,.95);
+      font-weight:700;
+      font-size:12px;
+    }
+    h1{
+      margin:12px 0 10px;
+      font-size: clamp(26px, 3.2vw, 38px);
+      line-height:1.14;
+      letter-spacing:-.2px;
+    }
+    .lead{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.55;
+    }
+    .heroActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:14px;
+    }
+    .ghost{
+      background: rgba(255,255,255,.68);
+      border:1px solid rgba(47,111,78,.20);
+      color: var(--primary2);
+      box-shadow:none;
+      font-weight:800;
+    }
+    .trust{
+      margin-top:14px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .trust b{color:var(--text)}
+    .sideCard{
       display:flex;
       flex-direction:column;
-      min-height: clamp(520px, 72vh, 760px);
+      justify-content:space-between;
+      gap:12px;
+      background: linear-gradient(180deg, rgba(47,111,78,.08), rgba(255,255,255,.75));
+      border:1px solid rgba(47,111,78,.16);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding:18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .sideCard:before{
+      content:"";
+      position:absolute;
+      inset:-80px -80px auto auto;
+      width:240px;height:240px;border-radius:50%;
+      background: radial-gradient(circle at 40% 40%, rgba(111,191,143,.35), transparent 58%);
+    }
+    .sideCard h3{
+      margin:0 0 6px;
+      font-size:16px;
+    }
+    .steps{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.55}
+    .steps li{margin:6px 0}
+
+    /* ===== Sections ===== */
+    section{padding:18px 0}
+    .secTitle{
+      display:flex; align-items:flex-end; justify-content:space-between;
+      gap:12px; flex-wrap:wrap;
+      margin:0 0 12px;
+    }
+    .secTitle h2{margin:0;font-size:18px}
+    .secTitle p{margin:0;color:var(--muted);font-size:13px}
+
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+    .card{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: 0 12px 35px rgba(17,24,39,.08);
+      padding:16px;
+    }
+    .card b{display:block;margin-bottom:6px}
+    .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+
+    .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .tag{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: var(--soft);
+      border:1px solid rgba(47,111,78,.14);
+      color: rgba(47,111,78,.92);
+      font-weight:700;
     }
 
-    .hintbar{
-      padding:12px 14px 10px;
-      border-bottom:1px solid var(--line);
-      background: rgba(255,255,255,.02);
+    /* ===== Footer ===== */
+    footer{
+      padding:22px 0 90px; /* leave room for chat btn on mobile */
+      color:var(--muted);
+      font-size:12px;
     }
-    .hintbar .row{
+    .footRow{
       display:flex;
       justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:8px;
+      gap:12px;
       flex-wrap:wrap;
+      border-top:1px solid var(--line);
+      padding-top:16px;
     }
-    .hintbar .row .h{font-size:12px; color:var(--muted)}
-    .chips{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-    .chip{
-      font-size:12px;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid var(--chipLine);
-      background: var(--chip);
-      cursor:pointer;
-      user-select:none;
-      transition: transform .06s ease;
-    }
-    .chip:active{transform: translateY(1px);}
 
-    .chat{
+    /* ===== Chat launcher (fixed) ===== */
+    .chatLauncher{
+      position:fixed;
+      right:16px;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      z-index:50;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .launcherBtn{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px;
+      border-radius:999px;
+      border:0;
+      cursor:pointer;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      color:#fff;
+      font-weight:900;
+      box-shadow: 0 18px 45px rgba(47,111,78,.22);
+      white-space:nowrap;
+    }
+    .launcherBtn small{font-weight:700;opacity:.9}
+    .launcherBtn svg{width:18px;height:18px}
+    .launcherHint{
+      display:none;
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.78);
+      border:1px solid var(--line);
+      color: var(--text);
+      box-shadow: 0 12px 30px rgba(17,24,39,.10);
+      font-size:12px;
+    }
+    @media (min-width: 900px){
+      .launcherHint{display:block}
+    }
+
+    /* ===== Chat modal / widget ===== */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(17,24,39,.35);
+      backdrop-filter: blur(6px);
+      z-index:60;
+      display:none;
+      align-items:flex-end;
+      justify-content:flex-end;
+      padding:16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    .overlay.show{display:flex;}
+    .widget{
+      width: min(430px, calc(100vw - 32px));
+      height: min(640px, calc(100vh - 120px));
+      border-radius: 18px;
+      background: rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .wTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 12px;
+      background: rgba(255,255,255,.92);
+      border-bottom:1px solid var(--line);
+    }
+    .wTitle{display:flex; flex-direction:column; gap:2px; min-width:0}
+    .wTitle b{font-size:13px}
+    .wTitle small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .statusDot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:6px;transform: translateY(-1px);}
+    .statusDot.off{background:#ef4444;}
+    .wBtns{display:flex; gap:8px; align-items:center}
+    .iconBtn{
+      width:34px;height:34px;border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(47,111,78,.06);
+      cursor:pointer;
+      color: var(--primary2);
+    }
+    .iconBtn:hover{background: rgba(47,111,78,.10);}
+    .wBody{
       flex:1;
       overflow:auto;
-      padding:14px;
-      scroll-behavior:smooth;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(238,246,240,.60), rgba(246,248,243,.60));
     }
 
     .msg{display:flex; margin:10px 0;}
     .msg.me{justify-content:flex-end}
     .bubble{
-      max-width: min(720px, 88%);
+      max-width: 86%;
       padding:10px 12px;
-      border-radius: 14px;
-      border:1px solid var(--botLine);
-      background: var(--botBg);
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.10);
+      background: rgba(255,255,255,.86);
       white-space:pre-wrap;
       line-height:1.45;
       font-size:14px;
     }
     .me .bubble{
-      background: var(--meBg);
-      border-color: var(--meLine);
+      background: rgba(111,191,143,.18);
+      border-color: rgba(47,111,78,.18);
     }
-
-    .dock{
-      padding:12px 14px;
+    .wDock{
+      padding:12px;
       border-top:1px solid var(--line);
-      background: rgba(16,28,56,.78);
-      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,.92);
     }
-    .composer{
-      display:flex;
-      gap:10px;
-      align-items:flex-end;
-    }
+    .composer{display:flex; gap:10px; align-items:flex-end;}
     textarea{
       flex:1;
       min-height:44px;
-      max-height:140px;
+      max-height:110px;
       resize:vertical;
       padding:10px 12px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background: #0b1220;
+      border:1px solid rgba(17,24,39,.14);
+      background: #fff;
       color: var(--text);
       outline:none;
       font-size:14px;
       line-height:1.35;
     }
-    textarea::placeholder{color:rgba(230,238,252,.55)}
-    button{
+    textarea::placeholder{color:rgba(107,114,128,.9)}
+    .sendBtn{
       height:44px;
       padding:0 14px;
       border-radius:14px;
-      border:1px solid var(--btnLine);
-      background: var(--btn);
-      color: var(--text);
+      border:0;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      color:#fff;
       cursor:pointer;
-      font-weight:650;
+      font-weight:900;
+      display:flex; align-items:center; gap:8px;
+      box-shadow: 0 10px 26px rgba(47,111,78,.20);
       white-space:nowrap;
     }
-    button:disabled{opacity:.6; cursor:not-allowed}
-    .subhint{
+    .sendBtn:disabled{opacity:.65; cursor:not-allowed; box-shadow:none}
+    .sub{
       margin-top:8px;
-      font-size:12px;
-      color:var(--muted);
       display:flex;
       justify-content:space-between;
       gap:10px;
       flex-wrap:wrap;
+      font-size:12px;
+      color: var(--muted);
     }
-    .subhint a{color:#93c5fd; text-decoration:none}
-    .kbd{border:1px solid var(--line); padding:2px 6px; border-radius:8px; font-size:11px; color:var(--muted)}
+    .sub a{color: var(--primary2); text-decoration:none; font-weight:800}
 
-    @media (max-width: 520px){
-      .bubble{max-width:92%}
-      .topbar{padding:12px 12px}
-      .hintbar{padding:10px 12px}
-      .chat{padding:12px}
-      .dock{padding:10px 12px}
-      button{padding:0 12px}
+    /* typing */
+    .typing{
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted);
+      padding:4px 2px 0;
+    }
+    .dots{display:flex; gap:4px; align-items:center}
+    .dots i{
+      width:6px;height:6px;border-radius:50%;
+      background: rgba(107,114,128,.55);
+      animation: b 1.1s infinite ease-in-out;
+    }
+    .dots i:nth-child(2){animation-delay:.15s}
+    .dots i:nth-child(3){animation-delay:.3s}
+    @keyframes b{
+      0%,80%,100%{transform: translateY(0); opacity:.55}
+      40%{transform: translateY(-4px); opacity:1}
+    }
+
+    @media (max-width: 860px){
+      .heroGrid{grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px){
+      .grid3{grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="shell">
-      <div class="topbar">
-        <div class="brand">
-          <div class="logo">AI</div>
-          <div class="title">
-            <b>AI CSKH TPCN – Demo</b>
-            <span>Backend: <span id="api"></span></span>
-          </div>
+
+<header>
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="#top">
+        <div class="logo">🌿</div>
+        <div class="brandText">
+          <b>Hệ sinh thái TPCN thiên nhiên</b>
+          <span>Tư vấn nhanh cùng Trợ lý AI • CSKH + bán hàng</span>
         </div>
-        <div class="actions">
-          <a class="pill" href="/health" target="_blank" rel="noopener">Health</a>
-        </div>
+      </a>
+      <div class="navRight">
+        <a class="pill" href="/health" target="_blank" rel="noopener">Health</a>
+        <button class="btn" id="btnOpenTop" type="button" aria-label="Tư vấn cùng AI">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12c0 1.784.468 3.457 1.287 4.904.154.27.204.587.117.89l-.806 2.79a.9.9 0 0 0 1.11 1.11l2.79-.806c.303-.087.62-.037.89.117A9.95 9.95 0 0 0 12 22Z" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>Tư vấn cùng AI</span>
+        </button>
       </div>
+    </div>
+  </div>
+</header>
 
-      <div class="card">
-        <div class="hintbar">
-          <div class="row">
-            <div class="h">Gợi ý test nhanh 👇</div>
-            <div class="h">Mẹo: <span class="kbd">Enter</span> gửi • <span class="kbd">Shift</span>+<span class="kbd">Enter</span> xuống dòng</div>
+<main id="top">
+  <div class="container">
+    <div class="hero">
+      <div class="heroGrid">
+        <div class="heroCard">
+          <div class="kicker">🌱 Tự nhiên • Minh bạch • Dễ dùng</div>
+          <h1>Giới thiệu hệ sinh thái TPCN thiên nhiên<br/>hỗ trợ sức khỏe mỗi ngày</h1>
+          <p class="lead">
+            Chúng tôi xây dựng hệ sinh thái sản phẩm từ nguyên liệu tự nhiên, quy trình rõ ràng và tư vấn minh bạch.
+            Trợ lý AI giúp anh/chị <b>chọn sản phẩm/combo phù hợp</b>, <b>hướng dẫn mua hàng</b> và <b>kết nối CSKH</b> khi cần.
+          </p>
+          <div class="heroActions">
+            <button class="btn" id="btnOpenHero" type="button">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12c0 1.784.468 3.457 1.287 4.904.154.27.204.587.117.89l-.806 2.79a.9.9 0 0 0 1.11 1.11l2.79-.806c.303-.087.62-.037.89.117A9.95 9.95 0 0 0 12 22Z" stroke="currentColor" stroke-width="1.8"/></svg>
+              <span>Tư vấn cùng AI</span>
+            </button>
+            <button class="btn ghost" id="btnScroll" type="button">Xem hệ sinh thái</button>
           </div>
-          <div class="chips" id="chips"></div>
+          <div class="trust">
+            <span>✅ <b>Không</b> cam kết “khỏi bệnh”</span>
+            <span>✅ Tư vấn theo <b>dữ liệu sản phẩm</b></span>
+            <span>✅ Có <b>hotline/fanpage</b> khi cần</span>
+          </div>
         </div>
 
-        <div class="chat" id="chat"></div>
-
-        <div class="dock">
-          <div class="composer">
-            <textarea id="txt" placeholder="Nhập câu hỏi... (VD: Bị tiểu đường dùng combo nào?)"></textarea>
-            <button id="send">Gửi</button>
+        <div class="sideCard">
+          <div>
+            <h3>AI tư vấn theo 3 bước</h3>
+            <ol class="steps">
+              <li>AI hỏi 1–2 câu để hiểu nhu cầu (nếu cần).</li>
+              <li>Đối chiếu dữ liệu sản phẩm/combo của doanh nghiệp.</li>
+              <li>Đề xuất phương án + hướng dẫn mua/đặt hàng.</li>
+            </ol>
           </div>
-          <div class="subhint">
-            <span>📌 Demo thương mại: trả lời theo dữ liệu công ty, không hứa “khỏi bệnh”.</span>
-            <span><a href="#" id="btnClear">Xoá hội thoại</a></span>
+          <div class="tags">
+            <span class="tag">Đường huyết</span>
+            <span class="tag">Dạ dày</span>
+            <span class="tag">Mỡ máu</span>
+            <span class="tag">Gan</span>
+            <span class="tag">Xương khớp</span>
+            <span class="tag">Giấc ngủ</span>
           </div>
         </div>
       </div>
     </div>
+
+    <section id="ecosystem">
+      <div class="secTitle">
+        <h2>Hệ sinh thái sản phẩm</h2>
+        <p>Nhóm công dụng phổ biến • Tư vấn combo/sản phẩm theo nhu cầu</p>
+      </div>
+      <div class="grid3">
+        <div class="card">
+          <b>🌿 Nhóm chuyển hoá</b>
+          <p>Hỗ trợ đường huyết, mỡ máu, gan… tư vấn theo thói quen ăn uống và mục tiêu.</p>
+        </div>
+        <div class="card">
+          <b>🌿 Nhóm tiêu hoá</b>
+          <p>Hỗ trợ dạ dày, trào ngược, men vi sinh… gợi ý theo thời điểm đau và sinh hoạt.</p>
+        </div>
+        <div class="card">
+          <b>🌿 Nhóm xương khớp</b>
+          <p>Hỗ trợ vận động, giảm khó chịu… gợi ý liệu trình theo mức độ và độ tuổi.</p>
+        </div>
+        <div class="card">
+          <b>🌿 Nhóm miễn dịch</b>
+          <p>Hỗ trợ đề kháng theo mùa, theo tình trạng cơ thể… ưu tiên dùng dễ, phù hợp.</p>
+        </div>
+        <div class="card">
+          <b>🌿 Nhóm giấc ngủ & tinh thần</b>
+          <p>Hỗ trợ ngủ ngon, thư giãn… tư vấn theo lịch ngủ và mức độ stress.</p>
+        </div>
+        <div class="card">
+          <b>🌿 Nhóm làm đẹp</b>
+          <p>Hỗ trợ da, tóc… gợi ý theo mục tiêu và thời gian mong muốn cải thiện.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="secTitle">
+        <h2>Minh bạch & an toàn</h2>
+        <p>Trợ lý AI không thay thế bác sĩ • Tư vấn theo dữ liệu doanh nghiệp</p>
+      </div>
+      <div class="grid3">
+        <div class="card">
+          <b>📌 Không chẩn đoán</b>
+          <p>AI chỉ hỗ trợ lựa chọn sản phẩm/combo; không đưa ra chẩn đoán bệnh.</p>
+        </div>
+        <div class="card">
+          <b>📌 Không “hứa khỏi”</b>
+          <p>Không cam kết kết quả; chỉ dùng ngôn ngữ “hỗ trợ/cải thiện”.</p>
+        </div>
+        <div class="card">
+          <b>📌 Kết nối CSKH</b>
+          <p>Nội dung kinh doanh/phức tạp sẽ điều hướng hotline/fanpage để hỗ trợ nhanh.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footRow">
+        <div>© Demo Landing Page • Hệ sinh thái TPCN thiên nhiên</div>
+        <div>Trợ lý AI: CSKH + bán hàng • Kết nối hotline/fanpage khi cần</div>
+      </div>
+    </footer>
   </div>
+</main>
+
+<!-- Launcher -->
+<div class="chatLauncher" aria-label="Chat launcher">
+  <div class="launcherHint">Cần tư vấn? Nhấn để chat với AI 🌿</div>
+  <button class="launcherBtn" id="btnOpen" type="button">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12c0 1.784.468 3.457 1.287 4.904.154.27.204.587.117.89l-.806 2.79a.9.9 0 0 0 1.11 1.11l2.79-.806c.303-.087.62-.037.89.117A9.95 9.95 0 0 0 12 22Z" stroke="currentColor" stroke-width="1.8"/></svg>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.1">
+      <span>Tư vấn cùng AI</span>
+      <small>Miễn phí • 30 giây</small>
+    </div>
+  </button>
+</div>
+
+<!-- Overlay + Widget -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="AI Chat">
+  <div class="widget" role="document">
+    <div class="wTop">
+      <div class="wTitle">
+        <b>Trợ lý AI TPCN</b>
+        <small><span id="dot" class="statusDot"></span><span id="status">Đang kiểm tra kết nối…</span></small>
+      </div>
+      <div class="wBtns">
+        <button class="iconBtn" id="btnClear" title="Xoá hội thoại">🧹</button>
+        <button class="iconBtn" id="btnClose" title="Đóng">✕</button>
+      </div>
+    </div>
+
+    <div class="wBody" id="chat"></div>
+
+    <div class="wDock">
+      <div class="composer">
+        <textarea id="txt" placeholder="Nhập câu hỏi… (VD: Đau dạ dày dùng sản phẩm nào?)"></textarea>
+        <button class="sendBtn" id="send"><span>Gửi</span><span aria-hidden="true">➤</span></button>
+      </div>
+      <div class="sub">
+        <span>⏎ Enter gửi • Shift+Enter xuống dòng</span>
+        <span><a href="#" id="btnExample">Gợi ý câu hỏi</a></span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   const API = location.origin;
-  document.getElementById("api").textContent = API;
 
-  const SUGGEST = [
-    "Người bị tiểu đường dùng combo nào?",
-    "Đau dạ dày / trào ngược dùng sản phẩm nào?",
-    "Mỡ máu cao dùng gì?",
-    "Mua hàng như thế nào? Có COD không?",
-    "Uống bao lâu khỏi? Có cam kết không?",
-    "Chính sách đại lý/hoa hồng?"
-  ];
+  // UI elements
+  const overlay = document.getElementById("overlay");
+  const btnOpen = document.getElementById("btnOpen");
+  const btnOpenTop = document.getElementById("btnOpenTop");
+  const btnOpenHero = document.getElementById("btnOpenHero");
+  const btnClose = document.getElementById("btnClose");
+  const btnScroll = document.getElementById("btnScroll");
 
   const chat = document.getElementById("chat");
   const txt = document.getElementById("txt");
-  const btn = document.getElementById("send");
-  const chips = document.getElementById("chips");
+  const btnSend = document.getElementById("send");
   const btnClear = document.getElementById("btnClear");
+  const btnExample = document.getElementById("btnExample");
 
+  const dot = document.getElementById("dot");
+  const statusEl = document.getElementById("status");
+
+  function openChat(){
+    overlay.classList.add("show");
+    setTimeout(() => txt.focus(), 50);
+    ping();
+  }
+  function closeChat(){
+    overlay.classList.remove("show");
+  }
+  btnOpen.onclick = openChat;
+  btnOpenTop.onclick = openChat;
+  btnOpenHero.onclick = openChat;
+  btnClose.onclick = closeChat;
+
+  overlay.addEventListener("click", (e)=>{
+    if(e.target === overlay) closeChat();
+  });
+
+  btnScroll.onclick = () => {
+    const el = document.getElementById("ecosystem");
+    if(el) el.scrollIntoView({behavior:"smooth"});
+  };
+
+  // formatting
   function escapeHtml(s){
     return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
   function formatLite(md){
     let s = escapeHtml(String(md||""));
     s = s.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-    s = s.replace(/\[([^\]]+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#93c5fd;text-decoration:none">$1</a>');
+    s = s.replace(/\[([^\]]+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#24563c;text-decoration:underline;font-weight:800">$1</a>');
     s = s.replace(/^###\s*(.+)$/gm, "<b>$1</b>");
     s = s.replace(/\n/g, "<br>");
     return s;
   }
-
   function add(role, content){
     const row = document.createElement("div");
     row.className = "msg " + (role === "me" ? "me" : "bot");
-
     const b = document.createElement("div");
     b.className = "bubble";
     b.innerHTML = formatLite(content);
-
     row.appendChild(b);
     chat.appendChild(row);
     chat.scrollTop = chat.scrollHeight;
   }
 
-  SUGGEST.forEach(s => {
-    const c = document.createElement("div");
-    c.className = "chip";
-    c.textContent = s;
-    c.onclick = () => { txt.value = s; txt.focus(); };
-    chips.appendChild(c);
-  });
+  // "AI đang suy nghĩ..." professional phrases
+  const THINKING = [
+    "Đang phân tích nhu cầu…",
+    "Đang đối chiếu dữ liệu sản phẩm…",
+    "Đang lựa chọn giải pháp phù hợp…"
+  ];
+  let thinkTimer = null;
+  let thinkIdx = 0;
+
+  function showThinking(show){
+    let el = document.getElementById("typing");
+    if(show){
+      if(el) return;
+      el = document.createElement("div");
+      el.id = "typing";
+      el.className = "typing";
+      el.innerHTML = '<span id="thinkText">'+THINKING[0]+'</span><span class="dots"><i></i><i></i><i></i></span>';
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+
+      thinkIdx = 0;
+      thinkTimer = setInterval(()=>{
+        const tt = document.getElementById("thinkText");
+        thinkIdx = (thinkIdx + 1) % THINKING.length;
+        if(tt) tt.textContent = THINKING[thinkIdx];
+      }, 1200);
+    }else{
+      if(thinkTimer){ clearInterval(thinkTimer); thinkTimer = null; }
+      if(el) el.remove();
+    }
+  }
+
+  async function ping(){
+    try{
+      const r = await fetch(API + "/health", {cache:"no-store"});
+      const j = await r.json();
+      dot.classList.remove("off");
+      statusEl.textContent = "Online • " + (j.profile || "profile");
+    }catch(_){
+      dot.classList.add("off");
+      statusEl.textContent = "Offline (không truy cập được /health)";
+    }
+  }
+
+  // simple session id for memory continuity
+  function getSessionId(){
+    const k = "tpcn_session_id";
+    let v = localStorage.getItem(k);
+    if(!v){
+      v = "sess_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      localStorage.setItem(k, v);
+    }
+    return v;
+  }
 
   async function send(){
     const m = txt.value.trim();
     if(!m) return;
-
     add("me", m);
     txt.value = "";
-    btn.disabled = true;
+    btnSend.disabled = true;
+    showThinking(true);
 
     try{
       const res = await fetch(API + "/chat", {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ message: m })
+        body: JSON.stringify({ message: m, session_id: getSessionId() })
       });
       const data = await res.json();
-      add("bot", data.reply || "(no reply)");
+      showThinking(false);
+      add("bot", data.reply || "Dạ em chưa nhận được phản hồi hợp lệ. Anh/chị thử lại giúp em nhé ạ.");
     }catch(e){
-      add("bot", "Lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
+      showThinking(false);
+      add("bot", "Dạ hệ thống đang bận hoặc lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
     }finally{
-      btn.disabled = false;
+      btnSend.disabled = false;
       txt.focus();
     }
   }
 
-  btn.onclick = send;
-
+  btnSend.onclick = send;
   txt.addEventListener("keydown", (e) => {
     if(e.key === "Enter" && !e.shiftKey){
       e.preventDefault();
@@ -341,13 +743,20 @@
     }
   });
 
-  btnClear.onclick = (e) => {
-    e.preventDefault();
+  btnClear.onclick = () => {
     chat.innerHTML = "";
-    add("bot","Dạ em chào anh/chị 😊 Anh/chị cần tư vấn sản phẩm/combo hay hướng dẫn mua hàng ạ?");
+    add("bot","Dạ em chào anh/chị 😊 Em là **Trợ lý AI tư vấn TPCN thiên nhiên**. Anh/chị đang quan tâm nhóm nào ạ (dạ dày/đường huyết/mỡ máu/gan/xương khớp/giấc ngủ…)?");
   };
 
-  add("bot","Dạ em chào anh/chị 😊 Anh/chị cần tư vấn sản phẩm/combo hay hướng dẫn mua hàng ạ?");
+  btnExample.onclick = (e) => {
+    e.preventDefault();
+    txt.value = "Đau dạ dày / trào ngược thì nên dùng sản phẩm hoặc combo nào? Cho em cách dùng và link ạ.";
+    txt.focus();
+  };
+
+  // init greeting (only once per page load)
+  add("bot","Dạ em chào anh/chị 😊 Em là **Trợ lý AI tư vấn TPCN thiên nhiên**. Anh/chị đang quan tâm nhóm nào ạ (dạ dày/đường huyết/mỡ máu/gan/xương khớp/giấc ngủ…)?");
 </script>
+
 </body>
 </html>
