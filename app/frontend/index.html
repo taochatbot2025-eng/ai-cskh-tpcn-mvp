@@ -634,16 +634,10 @@
 
   const ctaBar = document.getElementById("ctaBar");
 
-  function updateCtas(ctas, stage){
+  function updateCtas(ctas){
     if(!ctaBar) return;
     ctaBar.innerHTML = "";
-    const list0 = Array.isArray(ctas) ? ctas : [];
-    const st = (stage || '').toLowerCase();
-    // stage gate: hide CTA for greet/identify
-    if(!st || ['greet','identify'].includes(st)){ ctaBar.style.display = 'none'; return; }
-    // qualify: only show first topic CTA
-    const list = (st === 'qualify') ? (list0.slice(0,1)) : list0;
-    // stage gate
+    const list = Array.isArray(ctas) ? ctas : [];
     if(!list.length){ ctaBar.style.display = "none"; return; }
     list.forEach((c, i) => {
       const a = document.createElement(c.action === "link" ? "a" : "button");
@@ -813,7 +807,7 @@
 
   btnClear.onclick = () => {
     chat.innerHTML = "";
-    updateCtas([], 'identify');
+    updateCtas([]);
     add("bot","Dạ em chào anh/chị 😊 Em là **Trợ lý AI tư vấn TPCN thiên nhiên**. Anh/chị đang quan tâm nhóm nào ạ (dạ dày/đường huyết/mỡ máu/gan/xương khớp/giấc ngủ…)?");
   };
 

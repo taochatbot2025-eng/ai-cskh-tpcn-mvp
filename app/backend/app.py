@@ -47,11 +47,10 @@ def _detect_pronoun(text: str) -> str:
         return "anh"
     return "anh/chị"
 
-
-def build_contextual_ctas(meta: dict, topic_key: str, stage: str, profile_mode: str, sales_signal: bool, turns: int) -> list:
-    # CTA actions: send (prefill), link (open)
+def build_contextual_ctas(meta: dict, topic_key: str, profile_mode: str, sales_signal: bool, turns: int) -> list:
+    # CTA actions: send (prefill), link (open), handoff (open contact), order (send order intent)
     ctas = []
-
+    # topic CTA
     topic_map = {
         "da_day": ("Xem combo dạ dày", "Đau dạ dày / trào ngược dùng combo nào?"),
         "duong_huyet": ("Xem combo đường huyết", "Người bị tiểu đường dùng combo nào?"),
@@ -59,58 +58,129 @@ def build_contextual_ctas(meta: dict, topic_key: str, stage: str, profile_mode: 
         "xuong_khop": ("Xem combo xương khớp", "Đau xương khớp dùng sản phẩm/combo nào?"),
         "giac_ngu": ("Xem giải pháp giấc ngủ", "Mất ngủ/lo âu nên dùng sản phẩm nào?"),
     }
-
-    # Stage rules:
-    # - greet/identify: no CTA
-    # - qualify: ONLY show 1 topic CTA (if topic known)
-    # - offer: show topic CTA + (optional) Zalo/Fanpage (if available)
-    # - close: show order CTA + Zalo/Fanpage
-    if stage in ["qualify", "offer", "close"] and topic_key in topic_map:
+    if topic_key in topic_map:
         label, payload = topic_map[topic_key]
         ctas.append({"label": label, "action": "send", "payload": payload})
 
-    if stage == "close" and profile_mode == "SALES":
-        ctas.insert(0, {"label": "Đặt combo ngay", "action": "send", "payload": "Em muốn đặt hàng combo này. Hướng dẫn em chốt đơn (SĐT, địa chỉ, COD/chuyển khoản)."})
-        # keep topic CTA after order
+    # purchase CTA appears only when meaningful (sales signal OR user asked buy OR turns>=1 and topic known)
+    if profile_mode == "SALES" and (sales_signal or topic_key in ["mua_hang", "kinh_doanh"] or (turns >= 1 and topic_key)):
+        ctas.append({"label": "Đặt nhanh", "action": "send", "payload": "Em muốn đặt hàng nhanh. Hướng dẫn em cách chốt đơn."})
 
-    # Handoff channels only when offer/close/handoff
-    if stage in ["offer", "close", "handoff"]:
+    # handoff links appear when topic known or user is in buying flow
+    if topic_key or sales_signal or turns >= 1:
         if meta.get("zalo"):
             ctas.append({"label": "Zalo 1-1", "action": "link", "url": str(meta.get("zalo"))})
         if meta.get("fanpage"):
             ctas.append({"label": "Fanpage", "action": "link", "url": str(meta.get("fanpage"))})
     return ctas
 
-def _detect_stage(user_text: str, reply: str, topic_key: str, turns: int, intent_json: dict) -> str:
-    t = (user_text or "").strip().lower()
-    r = (reply or "").strip().lower()
 
-    # greet if first message and short greeting
-    if turns <= 0 and len(t) <= 12 and any(x in t for x in ["chào", "hi", "hello", "alo", "hey"]):
-        return "greet"
+def detect_stage(user_text: str, intent_json: dict, turns: int, combos: list, products: list) -> str:
+    """Heuristic stage for sales UX:
+    - identify: chào hỏi / chưa rõ vấn đề / cần hỏi thêm
+    - suggest: đã biết topic nhưng chưa đưa offer cụ thể
+    - offer: đã đưa combo/sản phẩm cụ thể
+    - close: user có tín hiệu mua/đặt hoặc đã để lại SĐT
+    - support: mua hàng/thanh toán/chính sách
+    """
+    t = (user_text or "").lower()
+    intent = (intent_json or {}).get("intent") or "unknown"
+    need_clarify = bool((intent_json or {}).get("need_clarify"))
+    sales_signal = bool((intent_json or {}).get("sales_signal"))
+    slots = (intent_json or {}).get("slots") or {}
+    has_phone = bool(str(slots.get("phone","") or "").strip())
 
-    # if no topic yet -> identify
-    if not topic_key:
+    # support intents
+    if intent in ("buy_payment", "agency_policy", "hard_business", "complaint"):
+        return "support"
+
+    if need_clarify:
         return "identify"
 
-    # user asking buy/payment -> close
-    if any(k in t for k in ["mua", "đặt", "thanh toán", "cod", "ship", "giao hàng", "giá", "link", "đổi trả"]):
+    # greeting / tiny message
+    if turns == 0 and len(t.strip()) <= 12 and any(x in t for x in ["chào", "hi", "hello", "alo"]):
+        return "identify"
+
+    # explicit order keywords
+    if any(k in t for k in ["đặt", "mua", "chốt", "lên đơn", "ship", "cod", "thanh toán", "giá bao nhiêu", "link"]):
         return "close"
 
-    # agent intent can force stage
-    if isinstance(intent_json, dict):
-        if intent_json.get("handoff"):
-            return "handoff"
-        if intent_json.get("sales_signal"):
-            return "close"
+    if sales_signal or has_phone:
+        return "close"
 
-    # offer if reply includes recommendation/combo/products
-    offer_markers = ["combo", "em đề xuất", "gợi ý", "phù hợp", "liều dùng", "cách dùng", "giá:", "link"]
-    if any(m in r for m in offer_markers):
+    # if we retrieved offer
+    if combos or products:
         return "offer"
 
-    # otherwise qualify (ask 1-2 questions)
-    return "qualify"
+    # otherwise we know topic but are still exploring
+    if _detect_topic_key(user_text):
+        return "suggest"
+
+    return "identify"
+
+
+def build_stage_ctas(meta: dict, topic_key: str, profile_mode: str, stage: str, sales_signal: bool, turns: int) -> list:
+    """Stage-based contextual CTAs."""
+    meta = meta or {}
+    ctas = []
+
+    topic_labels = {
+        "da_day": ("Xem combo dạ dày", "Đau dạ dày / trào ngược dùng combo nào?"),
+        "duong_huyet": ("Xem combo đường huyết", "Người bị tiểu đường dùng combo nào?"),
+        "mo_mau": ("Xem combo mỡ máu", "Mỡ máu cao dùng combo nào?"),
+        "xuong_khop": ("Xem combo xương khớp", "Đau xương khớp dùng sản phẩm/combo nào?"),
+        "giac_ngu": ("Xem giải pháp giấc ngủ", "Mất ngủ/lo âu nên dùng sản phẩm nào?"),
+    }
+
+    def add_contacts():
+        if meta.get("zalo"):
+            ctas.append({"label": "Zalo 1-1", "action": "link", "url": str(meta.get("zalo"))})
+        if meta.get("fanpage"):
+            ctas.append({"label": "Fanpage", "action": "link", "url": str(meta.get("fanpage"))})
+
+    # Stage rules:
+    # identify: no CTA
+    if stage == "identify":
+        return []
+
+    # suggest: ONLY show "Xem combo ..." for detected topic
+    if stage == "suggest":
+        if topic_key in topic_labels:
+            label, payload = topic_labels[topic_key]
+            ctas.append({"label": label, "action": "send", "payload": payload})
+        return ctas
+
+    # offer: show "Xem combo ..." + (optional) ask order, but NOT push hard if profile is CSKH_LIGHT
+    if stage == "offer":
+        if topic_key in topic_labels:
+            label, payload = topic_labels[topic_key]
+            ctas.append({"label": label, "action": "send", "payload": payload})
+        if profile_mode == "SALES":
+            # soft order
+            if topic_key == "da_day":
+                ctas.append({"label": "Đặt combo dạ dày", "action": "send", "payload": "Em muốn đặt combo dạ dày. Nhờ em chốt đơn giúp (COD) nhé."})
+            else:
+                ctas.append({"label": "Đặt nhanh", "action": "send", "payload": "Em muốn đặt hàng nhanh. Nhờ em chốt đơn giúp (COD) nhé."})
+        add_contacts()
+        return ctas
+
+    # close: prioritize order + contact
+    if stage == "close":
+        if profile_mode == "SALES":
+            if topic_key == "da_day":
+                ctas.append({"label": "Chốt combo dạ dày (COD)", "action": "send", "payload": "Chốt giúp em combo dạ dày (COD). Em gửi SĐT + địa chỉ ngay."})
+            else:
+                ctas.append({"label": "Chốt đơn (COD)", "action": "send", "payload": "Chốt đơn giúp em (COD). Em gửi SĐT + địa chỉ ngay."})
+        add_contacts()
+        return ctas
+
+    # support: contact only
+    if stage == "support":
+        add_contacts()
+        return ctas
+
+    # fallback
+    return build_contextual_ctas(meta, topic_key, profile_mode, sales_signal, turns)
 import tools
 
 load_dotenv()
@@ -267,11 +337,21 @@ def chat():
             "last_intent": intent,
             "tone": intent_json.get("tone","friendly"),
         })
-        # build contextual CTAs
-    topic_key2 = _detect_topic_key(user_text) or str(ctx.get("problem_key") or "")
-    ctas = build_contextual_ctas(store.meta, topic_key2, PROFILE_MODE, bool(body.get("sales_signal") or False) or bool((locals().get("intent_json") or {}).get("sales_signal")), turns)
-    return jsonify({"reply": reply, "meta": {"topic": topic_key2, "pronoun": ctx.get("pronoun","anh/chị"), "ctas": ctas}}), 200
+        
+    # ---------- stage-based CTA ----------
+    topic_key2 = _detect_topic_key(user_text) or str(problem_key or ctx.get("problem_key") or "")
+    stage = detect_stage(user_text=user_text, intent_json=intent_json, turns=turns, combos=combos, products=products)
+    ctas = build_stage_ctas(store.meta, topic_key2, PROFILE_MODE, stage, bool(intent_json.get("sales_signal")), turns)
 
+    return jsonify({
+        "reply": reply,
+        "meta": {
+            "topic": topic_key2,
+            "pronoun": ctx.get("pronoun", "anh/chị"),
+            "stage": stage,
+            "ctas": ctas
+        }
+    }), 200
     # ---- FALLBACK (legacy router) ----
     intent, problem = router.classify(user_text)
     problem_key = problem or ""
