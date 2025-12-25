@@ -88,35 +88,34 @@ def detect_stage(user_text: str, intent_json: dict, turns: int, combos: list, pr
     need_clarify = bool((intent_json or {}).get("need_clarify"))
     sales_signal = bool((intent_json or {}).get("sales_signal"))
     slots = (intent_json or {}).get("slots") or {}
-    has_phone = bool(str(slots.get("phone","") or "").strip())
+    has_phone = bool(str(slots.get("phone", "") or "").strip())
 
-    # support intents
+    if intent == "product_select":
+        return "close"
+
     if intent in ("buy_payment", "agency_policy", "hard_business", "complaint"):
         return "support"
 
     if need_clarify:
         return "identify"
 
-    # greeting / tiny message
     if turns == 0 and len(t.strip()) <= 12 and any(x in t for x in ["chào", "hi", "hello", "alo"]):
         return "identify"
 
-    # explicit order keywords
     if any(k in t for k in ["đặt", "mua", "chốt", "lên đơn", "ship", "cod", "thanh toán", "giá bao nhiêu", "link"]):
         return "close"
 
     if sales_signal or has_phone:
         return "close"
 
-    # if we retrieved offer
     if combos or products:
         return "offer"
 
-    # otherwise we know topic but are still exploring
     if _detect_topic_key(user_text):
         return "suggest"
 
     return "identify"
+
 
 
 def build_stage_ctas(meta: dict, topic_key: str, profile_mode: str, stage: str, sales_signal: bool, turns: int) -> list:
@@ -246,9 +245,40 @@ def chat():
     ctx = memory_store.get(session_id)
     turns = int(ctx.get("turns", 0) or 0)
 
+    # ---- quick product selection (from previous offer) ----
+    def _norm(s: str) -> str:
+        s = (s or "").strip().lower()
+        s = re.sub(r"\s+", " ", s)
+        return s
+    last_offer = ctx.get("last_offer_products") or []
+    matched_product = None
+    if last_offer:
+        ut = _norm(user_text)
+        for pn in last_offer:
+            if not pn:
+                continue
+            pnn = _norm(str(pn))
+            if ut == pnn or (len(pnn) >= 6 and pnn in ut) or (len(ut) >= 6 and ut in pnn):
+                matched_product = str(pn)
+                break
+
+
     # ---- AGENT PIPELINE (default) ----
     if AGENT_MODE != "0":
-        intent_json = extract_intent(user_text=user_text, ctx=ctx, meta=store.meta, profile_mode=PROFILE_MODE)
+        if matched_product:
+            intent_json = {
+                "intent": "product_select",
+                "problem_key": str(ctx.get("problem_key","") or ""),
+                "slots": {"product_name": matched_product},
+                "need_clarify": False,
+                "clarify_questions": [],
+                "risk_flags": [],
+                "sales_signal": True,
+                "handoff": False,
+                "tone": "friendly"
+            }
+        else:
+            intent_json = extract_intent(user_text=user_text, ctx=ctx, meta=store.meta, profile_mode=PROFILE_MODE)
 
         # prevent looping clarify: only ask clarify once, then proceed with best effort
         try:
@@ -327,7 +357,34 @@ def chat():
         ctx["pronoun"] = pronoun
         memory_store.set(session_id, ctx)
 
-        reply = compose_reply(
+        skip_llm = False
+        if intent == "product_select":
+            sel = (intent_json.get("slots") or {}).get("product_name") or ""
+            ps = tools.tool_search_products(store, str(sel), limit=1)
+            p = ps[0] if ps else None
+            if p:
+                name = str(p.get("name","") or sel)
+                price = str(p.get("price","") or "")
+                link = str(p.get("link","") or "")
+                benefits = str(p.get("benefits") or p.get("effect") or "")
+                usage = str(p.get("usage") or p.get("how_to_use") or "")
+                ing = str(p.get("ingredients") or p.get("components") or "")
+                reply = f"""Dạ em ghi nhận anh/chị đang chọn **{name}** ✅
+
+**Tóm tắt nhanh**
+- Giá: {price}
+- Thành phần chính: {ing}
+- Lợi ích: {benefits}
+- Cách dùng: {usage}
+
+Anh/chị cho em xin **SĐT + Tỉnh/TP + địa chỉ nhận hàng** để em lên đơn (COD) giúp mình nhé 😊
+(Link sản phẩm: {link})"""
+            else:
+                reply = "Dạ em ghi nhận anh/chị chọn **{sel}** ✅ Anh/chị cho em xin SĐT + địa chỉ để em lên đơn (COD) giúp mình nhé 😊".format(sel=sel)
+            skip_llm = True
+
+        if not skip_llm:
+            reply = compose_reply(
             meta=store.meta,
             profile=profile,
             user_text=user_text,
