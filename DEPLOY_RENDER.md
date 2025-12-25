@@ -20,3 +20,8 @@
 ## Test
 - /health
 - / (UI demo chat)
+
+
+## Nếu vẫn báo python-313
+- Render → Manual Deploy → **Clear build cache & deploy**
+- Đảm bảo có `runtime.txt` ở root và env `PYTHON_VERSION=3.11.9`
