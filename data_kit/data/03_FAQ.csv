@@ -1,0 +1,10 @@
+faq_id,intent,question,answer,priority,status
+FAQ01,mua_hang,Mua hàng như thế nào?,"Anh/chị có thể đặt trên website hoặc nhắn Fanpage/Zalo. Bên em sẽ gọi xác nhận đơn trước khi gửi ạ 😊",1,active
+FAQ02,mua_hang,Mua ở đâu chính hãng?,"Anh/chị đặt trực tiếp qua kênh chính hãng (Website/Fanpage/Zalo) để được hỗ trợ đúng chính sách và ưu đãi ạ.",2,active
+FAQ03,thanh_toan,Có COD không?,"Dạ bên em có COD (nhận hàng thanh toán) ạ. Anh/chị cho em xin tỉnh/thành để em kiểm tra phí/ thời gian giao nhé 😊",1,active
+FAQ04,thanh_toan,Chuyển khoản thế nào?,"Dạ anh/chị chuyển khoản theo thông tin bên em cung cấp khi xác nhận đơn. Nội dung chuyển khoản: SĐT + Mã đơn ạ.",2,active
+FAQ05,van_chuyen,Giao hàng bao lâu?,"Thường 2–5 ngày tuỳ khu vực. Anh/chị cho em xin tỉnh/thành để em ước tính sát hơn ạ.",1,active
+FAQ06,van_chuyen,Phí ship bao nhiêu?,"Phí ship tuỳ khu vực và chính sách từng thời điểm. Anh/chị cho em xin địa chỉ (tỉnh/thành) để em báo phí dự kiến nhé.",2,active
+FAQ07,doi_tra,Đổi trả thế nào?,"Anh/chị giữ giúp em video mở hàng. Nếu sản phẩm lỗi/ giao sai, bên em hỗ trợ đổi theo chính sách. Em xin phép kết nối CSKH xử lý nhanh ạ.",1,active
+FAQ08,tu_van,Đang dùng thuốc bác sĩ kê có dùng kèm được không?,"Dạ để an toàn, anh/chị giúp em cho biết mình đang dùng thuốc gì và tình trạng hiện tại. Em sẽ hướng dẫn theo khuyến nghị an toàn hoặc kết nối tư vấn trực tiếp ạ.",1,active
+FAQ09,tu_van,Bao lâu có hiệu quả?,"Dạ tuỳ cơ địa và chế độ ăn uống/sinh hoạt. Bên em thường tư vấn dùng theo lộ trình 14–30–60 ngày để theo dõi, nhưng không thể cam kết giống nhau cho mọi người ạ.",1,active
