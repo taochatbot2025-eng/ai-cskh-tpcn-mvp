@@ -98,7 +98,7 @@ def chat():
             })
             # Ask as 1 message (natural)
             reply = "Dạ em hỏi nhanh 1–2 ý để tư vấn đúng hơn ạ:\n- " + "\n- ".join(qs)
-            return jsonify({"reply": reply}), 200
+            return jsonify({"reply": reply, "topic": topic_key, "ctas": ctas}), 200
 
         # tool use
         intent = (intent_json.get("intent") or "unknown").strip()
@@ -155,6 +155,10 @@ def chat():
             ctx={"turns": turns, "problem_key": problem_key, "last_intent": intent, "tone": intent_json.get("tone","friendly")},
             lead_saved=lead_saved
         )
+
+        # contextual CTA (only when relevant)
+        topic_key = _detect_topic_key(user_text, problem_key, intent)
+        ctas = [c for c in (_contextual_cta(store.meta, topic_key) or []) if c]
 
         memory_store.update(session_id, {
             "turns": turns + 1,

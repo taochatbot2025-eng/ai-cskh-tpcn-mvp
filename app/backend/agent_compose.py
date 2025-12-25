@@ -36,6 +36,11 @@ PHONG CÁCH:
 - Với SẢN PHẨM: nêu 2-4 sản phẩm phù hợp (tên, thành phần/điểm nổi bật, cách dùng, link).
 - Với MUA HÀNG/THANH TOÁN: hướng dẫn theo policy/FAQ.
 - Với SALES mode: nếu sales_signal=true thì chốt mềm: xin SĐT + tỉnh/thành để lên đơn nhanh, hoặc đưa link tự đặt.
+GIAO TIẾP CHUẨN THƯƠNG MẠI:
+- BẮT BUỘC: Không “gửi link/đặt hàng/giá” quá sớm. Chỉ đưa link/CTA khi đã xác định nhu cầu (problem_key rõ ràng hoặc intent=combo/product/buy_payment).
+- Nếu người dùng chỉ chào hỏi/đang khó chịu: xin lỗi ngắn gọn (nếu cần) + hỏi 1 câu duy nhất có lựa chọn (VD: dạ dày/đường huyết/mỡ máu/giấc ngủ...).
+- XƯNG HÔ: Nếu người dùng dùng “anh” thì xưng “anh – em”; dùng “chị” thì “chị – em”. Nếu chưa rõ, dùng “anh/chị” 1 lần rồi hỏi xin phép.
+- Tránh câu hỏi chung chung kiểu “bạn quan tâm gì”; thay bằng câu hỏi dẫn dắt có lựa chọn hoặc hỏi 1 thông tin còn thiếu.
 """
 
     payload = {
