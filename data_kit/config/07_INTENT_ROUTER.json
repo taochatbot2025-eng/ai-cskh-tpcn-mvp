@@ -1,0 +1,250 @@
+{
+  "router_id": "ROUTER-CSKH-TPCN-V1",
+  "language": "vi",
+  "thresholds": {
+    "intent_min_confidence": 0.62,
+    "high_confidence": 0.78
+  },
+  "intents": [
+    {
+      "name": "tu_van_combo",
+      "priority": 90,
+      "keywords": [
+        "combo",
+        "gói",
+        "bộ",
+        "liệu trình",
+        "kết hợp",
+        "uống kèm",
+        "bị",
+        "tiểu đường",
+        "đái tháo đường",
+        "đường huyết",
+        "mỡ máu",
+        "cholesterol",
+        "huyết áp",
+        "dạ dày",
+        "trào ngược",
+        "gan",
+        "men gan",
+        "giải độc gan",
+        "xương khớp",
+        "gout",
+        "mất ngủ",
+        "stress",
+        "táo bón",
+        "đại tràng",
+        "tăng cân",
+        "giảm cân"
+      ],
+      "entities": [
+        "problem"
+      ],
+      "action": "FLOW_CONSULT_COMBO"
+    },
+    {
+      "name": "tu_van_san_pham",
+      "priority": 80,
+      "keywords": [
+        "sản phẩm",
+        "loại nào",
+        "uống gì",
+        "dùng gì",
+        "thuốc gì",
+        "viên",
+        "lọ",
+        "thành phần",
+        "công dụng",
+        "tác dụng",
+        "cách dùng",
+        "uống lúc nào"
+      ],
+      "entities": [
+        "problem",
+        "product_name"
+      ],
+      "action": "FLOW_CONSULT_PRODUCT"
+    },
+    {
+      "name": "huong_dan_mua_hang",
+      "priority": 95,
+      "keywords": [
+        "mua hàng",
+        "đặt hàng",
+        "order",
+        "mua ở đâu",
+        "cách mua",
+        "đặt như nào",
+        "ship",
+        "giao hàng",
+        "tư vấn đặt"
+      ],
+      "entities": [],
+      "action": "FLOW_FAQ_BUYING"
+    },
+    {
+      "name": "huong_dan_thanh_toan",
+      "priority": 95,
+      "keywords": [
+        "thanh toán",
+        "chuyển khoản",
+        "cod",
+        "tiền mặt",
+        "ví",
+        "momo",
+        "vnpay",
+        "quẹt thẻ"
+      ],
+      "entities": [],
+      "action": "FLOW_FAQ_PAYMENT"
+    },
+    {
+      "name": "chinh_sach_van_chuyen_doi_tra",
+      "priority": 88,
+      "keywords": [
+        "đổi trả",
+        "hoàn tiền",
+        "đổi hàng",
+        "bảo hành",
+        "vận chuyển",
+        "phí ship",
+        "bao lâu nhận",
+        "kiểm hàng"
+      ],
+      "entities": [],
+      "action": "FLOW_FAQ_POLICY"
+    },
+    {
+      "name": "yeu_cau_cam_ket_ket_qua",
+      "priority": 100,
+      "keywords": [
+        "bao lâu khỏi",
+        "khỏi hẳn",
+        "cam kết",
+        "chắc chắn khỏi",
+        "uống bao lâu khỏi",
+        "hết bệnh",
+        "đảm bảo",
+        "hoàn tiền nếu không hiệu quả"
+      ],
+      "entities": [],
+      "action": "FLOW_HANDOFF"
+    },
+    {
+      "name": "kinh_doanh_dai_ly",
+      "priority": 100,
+      "keywords": [
+        "kinh doanh",
+        "đại lý",
+        "cộng tác viên",
+        "hoa hồng",
+        "doanh số",
+        "tuyến trên",
+        "chính sách đại lý",
+        "thu nhập",
+        "lợi nhuận",
+        "đăng ký đại lý"
+      ],
+      "entities": [],
+      "action": "FLOW_HANDOFF"
+    },
+    {
+      "name": "khieu_nai",
+      "priority": 100,
+      "keywords": [
+        "khiếu nại",
+        "phàn nàn",
+        "lừa đảo",
+        "không nhận được hàng",
+        "hàng lỗi",
+        "hỏng",
+        "sai hàng",
+        "muốn trả"
+      ],
+      "entities": [],
+      "action": "FLOW_HANDOFF"
+    },
+    {
+      "name": "chao_hoi",
+      "priority": 10,
+      "keywords": [
+        "chào",
+        "hello",
+        "hi",
+        "xin chào",
+        "bạn ơi",
+        "ad ơi"
+      ],
+      "entities": [],
+      "action": "FLOW_GREETING"
+    },
+    {
+      "name": "ngoai_pham_vi",
+      "priority": 1,
+      "keywords": [],
+      "entities": [],
+      "action": "FLOW_FALLBACK"
+    }
+  ],
+  "entity_extractors": {
+    "problem": {
+      "type": "keyword_map",
+      "map": {
+        "tieu_duong": [
+          "tiểu đường",
+          "đái tháo đường",
+          "đường huyết",
+          "đường trong máu"
+        ],
+        "da_day": [
+          "dạ dày",
+          "đau dạ dày",
+          "trào ngược",
+          "ợ nóng",
+          "đầy bụng",
+          "ợ chua"
+        ],
+        "mo_mau": [
+          "mỡ máu",
+          "cholesterol",
+          "triglycerid"
+        ],
+        "huyet_ap": [
+          "huyết áp",
+          "cao huyết áp",
+          "tăng huyết áp"
+        ],
+        "gan": [
+          "gan",
+          "men gan",
+          "giải độc gan",
+          "nóng gan"
+        ],
+        "xuong_khop": [
+          "xương khớp",
+          "đau khớp",
+          "thoái hóa",
+          "gout",
+          "axit uric"
+        ],
+        "dai_trang": [
+          "đại tràng",
+          "rối loạn tiêu hóa",
+          "đầy hơi",
+          "táo bón",
+          "tiêu chảy"
+        ],
+        "mat_ngu": [
+          "mất ngủ",
+          "khó ngủ",
+          "stress",
+          "căng thẳng"
+        ]
+      }
+    },
+    "product_name": {
+      "type": "fuzzy_from_products_table",
+      "min_similarity": 0.78
+    }
+  }
+}
