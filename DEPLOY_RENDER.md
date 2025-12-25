@@ -30,3 +30,11 @@
 ## Lưu ý config
 - Profile/Router nằm ở: `data_kit/config/`
 - App tự đọc config từ đó (không cần `app/config`).
+
+
+## Agent mode (tư vấn + bán)
+- Mặc định bật: `AGENT_MODE=1`
+- Tắt để dùng router cũ: `AGENT_MODE=0`
+- Model intent (trích JSON): `OPENAI_MODEL_INTENT` (nếu bỏ trống sẽ dùng OPENAI_MODEL)
+- Model trả lời: `OPENAI_MODEL`
+

@@ -3,151 +3,147 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Trợ lý AI CSKH – Demo</title>
+  <title>AI CSKH TPCN – Demo</title>
   <style>
     :root{
-      --bg:#0b0f1a;
-      --card:#0f1626;
-      --card2:#0c1220;
-      --text:#eaf0ff;
-      --muted:rgba(234,240,255,.72);
+      --bg:#0b1220;
+      --text:#e6eefc;
+      --muted:rgba(230,238,252,.72);
       --line:rgba(255,255,255,.10);
-
-      --primary:#3b82f6;     /* xanh thương mại */
-      --primary2:#2563eb;
-      --primaryText:#ffffff;
-
+      --chip:rgba(255,255,255,.05);
+      --chipLine:rgba(255,255,255,.12);
+      --meBg:rgba(96,165,250,.20);
+      --meLine:rgba(96,165,250,.30);
       --botBg:rgba(255,255,255,.06);
       --botLine:rgba(255,255,255,.10);
-      --meBg:rgba(59,130,246,.18);
-      --meLine:rgba(59,130,246,.30);
-
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --r:16px;
+      --btn:#1b2a4a;
+      --btnLine:rgba(255,255,255,.18);
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --r:18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background:
-        radial-gradient(1100px 650px at 80% -10%, rgba(59,130,246,.20), transparent 55%),
-        radial-gradient(900px 540px at 10% 0%, rgba(34,197,94,.10), transparent 55%),
-        var(--bg);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(96,165,250,.18), transparent 55%),
+                  radial-gradient(900px 500px at 90% 0%, rgba(167,139,250,.14), transparent 55%),
+                  var(--bg);
       color:var(--text);
-      overflow:hidden;
     }
 
-    /* ====== Minimal header (small, not heavy) ====== */
-    .miniHeader{
-      position:fixed;
-      top:14px; left:14px; right:14px;
+    .page{
+      min-height:100%;
       display:flex;
-      justify-content:space-between;
-      align-items:center;
+      justify-content:center;
+      padding: clamp(12px, 2.5vw, 22px);
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    .shell{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
       gap:12px;
-      z-index:10;
-      pointer-events:none;
-    }
-    .miniBrand{
-      pointer-events:auto;
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px;
-      border-radius:999px;
-      background:rgba(255,255,255,.04);
-      border:1px solid var(--line);
-      backdrop-filter: blur(10px);
-    }
-    .badge{
-      width:30px;height:30px;border-radius:10px;
-      display:grid;place-items:center;
-      background:rgba(59,130,246,.16);
-      border:1px solid rgba(59,130,246,.25);
-      font-weight:800;
-      letter-spacing:.2px;
-    }
-    .miniBrand b{font-size:13px}
-    .miniBrand span{font-size:12px;color:var(--muted)}
-    .miniRight{
-      pointer-events:auto;
-      display:flex; gap:8px; align-items:center;
-    }
-    .linkPill{
-      font-size:12px;
-      padding:9px 11px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      text-decoration:none;
     }
 
-    /* ====== Floating chat widget ====== */
-    .widget{
-      position:fixed;
-      right:16px;
-      bottom: max(16px, env(safe-area-inset-bottom));
-      width: min(420px, calc(100vw - 32px));
-      border-radius: var(--r);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow:hidden;
-      z-index:20;
-    }
-
-    .wTop{
+    .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding:12px 12px;
-      background: rgba(255,255,255,.02);
-      border-bottom:1px solid var(--line);
+      padding:14px 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
     }
-    .wTitle{
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width:0;
+    }
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      display:grid; place-items:center;
+      background: rgba(96,165,250,.18);
+      border:1px solid rgba(96,165,250,.26);
+      font-weight:800;
+    }
+    .title{
       display:flex; flex-direction:column; gap:2px; min-width:0;
     }
-    .wTitle b{font-size:13px; letter-spacing:.2px}
-    .wTitle small{
-      font-size:12px; color:var(--muted);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    .title b{font-size:14px; letter-spacing:.2px}
+    .title span{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .actions{
+      display:flex; align-items:center; gap:10px;
     }
-    .dot{
-      display:inline-block;
-      width:7px;height:7px;border-radius:50%;
-      background:#22c55e;
-      margin-right:6px;
-      transform: translateY(-1px);
-    }
-    .dot.off{background:#ef4444;}
-
-    .wBtns{display:flex; gap:8px; align-items:center;}
-    .iconBtn{
-      width:34px;height:34px;
-      border-radius:12px;
+    .pill{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
+      background: rgba(255,255,255,.03);
       color:var(--text);
-      cursor:pointer;
+      text-decoration:none;
     }
-    .iconBtn:hover{background:rgba(255,255,255,.05)}
 
-    .wBody{
-      height: 360px; /* nhỏ gọn */
-      max-height: 60vh;
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+      display:flex;
+      flex-direction:column;
+      min-height: clamp(520px, 72vh, 760px);
+    }
+
+    .hintbar{
+      padding:12px 14px 10px;
+      border-bottom:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    .hintbar .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+    .hintbar .row .h{font-size:12px; color:var(--muted)}
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .chip{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--chipLine);
+      background: var(--chip);
+      cursor:pointer;
+      user-select:none;
+      transition: transform .06s ease;
+    }
+    .chip:active{transform: translateY(1px);}
+
+    .chat{
+      flex:1;
       overflow:auto;
-      padding:12px;
-      background: rgba(12,18,32,.55);
+      padding:14px;
+      scroll-behavior:smooth;
     }
 
     .msg{display:flex; margin:10px 0;}
     .msg.me{justify-content:flex-end}
     .bubble{
-      max-width: 86%;
+      max-width: min(720px, 88%);
       padding:10px 12px;
-      border-radius:14px;
+      border-radius: 14px;
       border:1px solid var(--botLine);
       background: var(--botBg);
       white-space:pre-wrap;
@@ -159,149 +155,126 @@
       border-color: var(--meLine);
     }
 
-    /* typing */
-    .typing{
-      display:flex; align-items:center; gap:8px;
-      font-size:12px; color:var(--muted);
-      padding:8px 2px 0;
-    }
-    .dots{display:flex; gap:4px; align-items:center}
-    .dots i{
-      width:6px;height:6px;border-radius:50%;
-      background: rgba(234,240,255,.55);
-      animation: b 1.1s infinite ease-in-out;
-    }
-    .dots i:nth-child(2){animation-delay:.15s}
-    .dots i:nth-child(3){animation-delay:.3s}
-    @keyframes b{
-      0%,80%,100%{transform: translateY(0); opacity:.55}
-      40%{transform: translateY(-4px); opacity:1}
-    }
-
-    .wDock{
-      padding:12px;
+    .dock{
+      padding:12px 14px;
       border-top:1px solid var(--line);
-      background: rgba(15,22,38,.88);
-      backdrop-filter: blur(12px);
+      background: rgba(16,28,56,.78);
+      backdrop-filter: blur(10px);
     }
-    .composer{display:flex; gap:10px; align-items:flex-end;}
+    .composer{
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
+    }
     textarea{
       flex:1;
       min-height:44px;
-      max-height:110px;
+      max-height:140px;
       resize:vertical;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.14);
-      background: rgba(11,15,26,.92);
+      background: #0b1220;
       color: var(--text);
       outline:none;
       font-size:14px;
       line-height:1.35;
     }
-    textarea::placeholder{color:rgba(234,240,255,.52)}
-
-    .sendBtn{
+    textarea::placeholder{color:rgba(230,238,252,.55)}
+    button{
       height:44px;
       padding:0 14px;
       border-radius:14px;
-      border:1px solid rgba(59,130,246,.35);
-      background: linear-gradient(180deg, var(--primary), var(--primary2));
-      color: var(--primaryText);
+      border:1px solid var(--btnLine);
+      background: var(--btn);
+      color: var(--text);
       cursor:pointer;
-      font-weight:700;
-      display:flex;
-      align-items:center;
-      gap:8px;
+      font-weight:650;
       white-space:nowrap;
-      box-shadow: 0 10px 26px rgba(37,99,235,.20);
     }
-    .sendBtn:disabled{opacity:.65; cursor:not-allowed; box-shadow:none}
-
-    .sub{
+    button:disabled{opacity:.6; cursor:not-allowed}
+    .subhint{
       margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
       display:flex;
       justify-content:space-between;
       gap:10px;
       flex-wrap:wrap;
-      font-size:12px;
-      color: var(--muted);
     }
-    .sub a{color:#93c5fd; text-decoration:none}
+    .subhint a{color:#93c5fd; text-decoration:none}
+    .kbd{border:1px solid var(--line); padding:2px 6px; border-radius:8px; font-size:11px; color:var(--muted)}
 
-    /* collapsed state */
-    .widget.collapsed .wBody,
-    .widget.collapsed .wDock{display:none;}
-    .widget.collapsed{width:min(360px, calc(100vw - 32px));}
-
-    /* small devices */
-    @media (max-width: 420px){
-      .wBody{height: 320px;}
-      .miniHeader{top:10px;left:10px;right:10px;}
+    @media (max-width: 520px){
+      .bubble{max-width:92%}
+      .topbar{padding:12px 12px}
+      .hintbar{padding:10px 12px}
+      .chat{padding:12px}
+      .dock{padding:10px 12px}
+      button{padding:0 12px}
     }
   </style>
 </head>
 <body>
-
-  <!-- Minimal header -->
-  <div class="miniHeader">
-    <div class="miniBrand">
-      <div class="badge">AI</div>
-      <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-        <b>Trợ lý AI CSKH</b>
-        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tư vấn theo dữ liệu doanh nghiệp • Không cam kết “khỏi bệnh”</span>
+  <div class="page">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">AI</div>
+          <div class="title">
+            <b>AI CSKH TPCN – Demo</b>
+            <span>Backend: <span id="api"></span></span>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="pill" href="/health" target="_blank" rel="noopener">Health</a>
+        </div>
       </div>
-    </div>
-    <div class="miniRight">
-      <a class="linkPill" href="/health" target="_blank" rel="noopener">Health</a>
-    </div>
-  </div>
 
-  <!-- Floating widget -->
-  <div class="widget" id="widget">
-    <div class="wTop">
-      <div class="wTitle">
-        <b>AI Assistant</b>
-        <small><span id="dot" class="dot"></span><span id="status">Đang kiểm tra kết nối…</span></small>
-      </div>
-      <div class="wBtns">
-        <button class="iconBtn" id="btnClear" title="Xoá hội thoại">🧹</button>
-        <button class="iconBtn" id="btnToggle" title="Thu gọn / Mở rộng">▾</button>
-      </div>
-    </div>
+      <div class="card">
+        <div class="hintbar">
+          <div class="row">
+            <div class="h">Gợi ý test nhanh 👇</div>
+            <div class="h">Mẹo: <span class="kbd">Enter</span> gửi • <span class="kbd">Shift</span>+<span class="kbd">Enter</span> xuống dòng</div>
+          </div>
+          <div class="chips" id="chips"></div>
+        </div>
 
-    <div class="wBody" id="chat"></div>
+        <div class="chat" id="chat"></div>
 
-    <div class="wDock">
-      <div class="composer">
-        <textarea id="txt" placeholder="Nhập câu hỏi… (VD: Người bị tiểu đường dùng combo nào?)"></textarea>
-        <button class="sendBtn" id="send">
-          <span>Gửi</span>
-          <span aria-hidden="true">➤</span>
-        </button>
-      </div>
-      <div class="sub">
-        <span>⏎ Enter gửi • Shift+Enter xuống dòng</span>
-        <span><a href="#" id="btnExample">Xem ví dụ</a></span>
+        <div class="dock">
+          <div class="composer">
+            <textarea id="txt" placeholder="Nhập câu hỏi... (VD: Bị tiểu đường dùng combo nào?)"></textarea>
+            <button id="send">Gửi</button>
+          </div>
+          <div class="subhint">
+            <span>📌 Demo thương mại: trả lời theo dữ liệu công ty, không hứa “khỏi bệnh”.</span>
+            <span><a href="#" id="btnClear">Xoá hội thoại</a></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
   const API = location.origin;
+  document.getElementById("api").textContent = API;
+
+  const SUGGEST = [
+    "Người bị tiểu đường dùng combo nào?",
+    "Đau dạ dày / trào ngược dùng sản phẩm nào?",
+    "Mỡ máu cao dùng gì?",
+    "Mua hàng như thế nào? Có COD không?",
+    "Uống bao lâu khỏi? Có cam kết không?",
+    "Chính sách đại lý/hoa hồng?"
+  ];
 
   const chat = document.getElementById("chat");
   const txt = document.getElementById("txt");
   const btn = document.getElementById("send");
+  const chips = document.getElementById("chips");
   const btnClear = document.getElementById("btnClear");
-  const btnToggle = document.getElementById("btnToggle");
-  const widget = document.getElementById("widget");
-  const btnExample = document.getElementById("btnExample");
 
-  const dot = document.getElementById("dot");
-  const statusEl = document.getElementById("status");
-
-  // Lite formatting: bold + link + line breaks
   function escapeHtml(s){
     return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
@@ -327,32 +300,13 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
-  function showTyping(show){
-    let el = document.getElementById("typing");
-    if(show){
-      if(el) return;
-      el = document.createElement("div");
-      el.id = "typing";
-      el.className = "typing";
-      el.innerHTML = '<span>AI đang soạn</span><span class="dots"><i></i><i></i><i></i></span>';
-      chat.appendChild(el);
-      chat.scrollTop = chat.scrollHeight;
-    }else{
-      if(el) el.remove();
-    }
-  }
-
-  async function ping(){
-    try{
-      const r = await fetch(API + "/health", {cache:"no-store"});
-      const j = await r.json();
-      dot.classList.remove("off");
-      statusEl.textContent = "Online • " + (j.profile || "profile") ;
-    }catch(_){
-      dot.classList.add("off");
-      statusEl.textContent = "Offline (không truy cập được /health)";
-    }
-  }
+  SUGGEST.forEach(s => {
+    const c = document.createElement("div");
+    c.className = "chip";
+    c.textContent = s;
+    c.onclick = () => { txt.value = s; txt.focus(); };
+    chips.appendChild(c);
+  });
 
   async function send(){
     const m = txt.value.trim();
@@ -361,7 +315,6 @@
     add("me", m);
     txt.value = "";
     btn.disabled = true;
-    showTyping(true);
 
     try{
       const res = await fetch(API + "/chat", {
@@ -370,11 +323,9 @@
         body: JSON.stringify({ message: m })
       });
       const data = await res.json();
-      showTyping(false);
-      add("bot", data.reply || "Dạ em chưa nhận được phản hồi hợp lệ. Anh/chị thử lại giúp em nhé ạ.");
+      add("bot", data.reply || "(no reply)");
     }catch(e){
-      showTyping(false);
-      add("bot", "Dạ hệ thống đang bận hoặc lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
+      add("bot", "Lỗi kết nối. Anh/chị thử tải lại trang giúp em nhé ạ.");
     }finally{
       btn.disabled = false;
       txt.focus();
@@ -382,6 +333,7 @@
   }
 
   btn.onclick = send;
+
   txt.addEventListener("keydown", (e) => {
     if(e.key === "Enter" && !e.shiftKey){
       e.preventDefault();
@@ -389,25 +341,13 @@
     }
   });
 
-  btnClear.onclick = () => {
-    chat.innerHTML = "";
-    add("bot","Dạ em chào anh/chị 😊 Em là **Trợ lý AI CSKH**. Anh/chị đang cần **tư vấn sản phẩm/combo**, hay **hướng dẫn mua hàng** ạ?");
-  };
-
-  btnToggle.onclick = () => {
-    widget.classList.toggle("collapsed");
-    btnToggle.textContent = widget.classList.contains("collapsed") ? "▴" : "▾";
-  };
-
-  btnExample.onclick = (e) => {
+  btnClear.onclick = (e) => {
     e.preventDefault();
-    txt.value = "Người bị tiểu đường dùng combo nào? (Cho em tên combo, giá, link, cách dùng)";
-    txt.focus();
+    chat.innerHTML = "";
+    add("bot","Dạ em chào anh/chị 😊 Anh/chị cần tư vấn sản phẩm/combo hay hướng dẫn mua hàng ạ?");
   };
 
-  // init
-  add("bot","Dạ em chào anh/chị 😊 Em là **Trợ lý AI CSKH**. Anh/chị đang cần **tư vấn sản phẩm/combo**, hay **hướng dẫn mua hàng** ạ?");
-  ping();
+  add("bot","Dạ em chào anh/chị 😊 Anh/chị cần tư vấn sản phẩm/combo hay hướng dẫn mua hàng ạ?");
 </script>
 </body>
 </html>
