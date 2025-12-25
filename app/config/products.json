@@ -1,0 +1,24 @@
+[
+  {
+    "id": "spA",
+    "name": "Sản phẩm A (Dạ dày)",
+    "ingredients": [
+      "Chiết xuất thảo mộc X",
+      "Kẽm"
+    ],
+    "benefit": "Hỗ trợ niêm mạc dạ dày.",
+    "use": "Uống theo hướng dẫn trên nhãn.",
+    "link": "https://example.com/spA"
+  },
+  {
+    "id": "spB",
+    "name": "Sản phẩm B (Men tiêu hoá)",
+    "ingredients": [
+      "Men vi sinh",
+      "Prebiotic"
+    ],
+    "benefit": "Hỗ trợ tiêu hoá.",
+    "use": "Uống theo hướng dẫn trên nhãn.",
+    "link": "https://example.com/spB"
+  }
+]
