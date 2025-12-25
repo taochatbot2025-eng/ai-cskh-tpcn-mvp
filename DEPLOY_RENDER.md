@@ -25,3 +25,8 @@
 ## Nếu vẫn báo python-313
 - Render → Manual Deploy → **Clear build cache & deploy**
 - Đảm bảo có `runtime.txt` ở root và env `PYTHON_VERSION=3.11.9`
+
+
+## Lưu ý config
+- Profile/Router nằm ở: `data_kit/config/`
+- App tự đọc config từ đó (không cần `app/config`).

@@ -16,13 +16,26 @@ APP_DIR = Path(__file__).parent.resolve()
 DATA_DIR = os.getenv("DATA_DIR", str((APP_DIR / ".." / ".." / "data_kit" / "data").resolve()))
 PROFILE_MODE = os.getenv("PROFILE_MODE", "SALES").upper()
 
+def _cfg_dir():
+    # Prefer config bundled with data_kit (data_kit/config) to keep repo root clean
+    try:
+        d = Path(DATA_DIR).resolve()
+        dk = d.parent / "config"
+        if dk.exists():
+            return dk
+    except Exception:
+        pass
+    # fallback: app/config
+    return (APP_DIR.parent / "config")
+
+
 def load_profile():
-    cfg_dir = APP_DIR.parent / "config"
+    cfg_dir = _cfg_dir()
     fname = "06_AI_PROFILE_SALES.json" if PROFILE_MODE == "SALES" else "06_AI_PROFILE_SOFT.json"
     return json.loads((cfg_dir / fname).read_text(encoding="utf-8"))
 
 def load_router(alias_tags):
-    cfg_dir = APP_DIR.parent / "config"
+    cfg_dir = _cfg_dir()
     return Router.load(str(cfg_dir / "07_INTENT_ROUTER.json"), alias_tags)
 
 app = Flask(__name__)
