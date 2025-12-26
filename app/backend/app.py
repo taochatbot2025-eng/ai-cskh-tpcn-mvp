@@ -118,10 +118,18 @@ def detect_stage(user_text: str, intent_json: dict, turns: int, combos: list, pr
 
 
 
+
 def build_stage_ctas(meta: dict, topic_key: str, profile_mode: str, stage: str, sales_signal: bool, turns: int) -> list:
-    """Stage-based contextual CTAs."""
+    """
+    Stage-based contextual CTAs.
+    - identify: hide
+    - suggest: show ONLY "Xem combo ..." for detected topic
+    - offer: show topic CTA + (SALES) order CTA + contacts
+    - close: show (SALES) order CTA + contacts
+    - support: show contacts
+    """
     meta = meta or {}
-    ctas = []
+    ctas: list = []
 
     topic_labels = {
         "da_day": ("Xem combo dạ dày", "Đau dạ dày / trào ngược dùng combo nào?"),
@@ -132,55 +140,58 @@ def build_stage_ctas(meta: dict, topic_key: str, profile_mode: str, stage: str, 
     }
 
     def add_contacts():
+        # contacts are optional; only add if configured
         if meta.get("zalo"):
             ctas.append({"label": "Zalo 1-1", "action": "link", "url": str(meta.get("zalo"))})
         if meta.get("fanpage"):
             ctas.append({"label": "Fanpage", "action": "link", "url": str(meta.get("fanpage"))})
 
-    # Stage rules:
-    # identify: no CTA
+    def add_topic_cta():
+        if topic_key in topic_labels:
+            label, payload = topic_labels[topic_key]
+            ctas.append({"label": label, "action": "send", "payload": payload})
+
+    def add_order_cta():
+        if profile_mode != "SALES":
+            return
+        # Use send action so frontend can just push a message to /chat
+        if topic_key == "da_day":
+            ctas.append({"label": "Đặt combo dạ dày", "action": "send", "payload": "Em muốn đặt combo dạ dày. Nhờ em chốt đơn giúp (COD) nhé."})
+        elif topic_key == "xuong_khop":
+            ctas.append({"label": "Đặt combo xương khớp", "action": "send", "payload": "Em muốn đặt combo xương khớp. Nhờ em chốt đơn giúp (COD) nhé."})
+        else:
+            ctas.append({"label": "Đặt nhanh", "action": "send", "payload": "Em muốn đặt hàng nhanh. Nhờ em chốt đơn giúp (COD) nhé."})
+
+    # ---- stage rules ----
+    stage = (stage or "identify").strip().lower()
+
     if stage == "identify":
         return []
 
-    # suggest: ONLY show "Xem combo ..." for detected topic
     if stage == "suggest":
-        if topic_key in topic_labels:
-            label, payload = topic_labels[topic_key]
-            ctas.append({"label": label, "action": "send", "payload": payload})
+        add_topic_cta()
         return ctas
 
-    # offer: show "Xem combo ..." + (optional) ask order, but NOT push hard if profile is CSKH_LIGHT
     if stage == "offer":
-        if topic_key in topic_labels:
-            label, payload = topic_labels[topic_key]
-            ctas.append({"label": label, "action": "send", "payload": payload})
-        if profile_mode == "SALES":
-            # soft order
-            if topic_key == "da_day":
-                ctas.append({"label": "Đặt combo dạ dày", "action": "send", "payload": "Em muốn đặt combo dạ dày. Nhờ em chốt đơn giúp (COD) nhé."})
-            else:
-                ctas.append({"label": "Đặt nhanh", "action": "send", "payload": "Em muốn đặt hàng nhanh. Nhờ em chốt đơn giúp (COD) nhé."})
+        add_topic_cta()
+        add_order_cta()
         add_contacts()
         return ctas
 
-    # close: prioritize order + contact
     if stage == "close":
-        if profile_mode == "SALES":
-            if topic_key == "da_day":
-                ctas.append({"label": "Chốt combo dạ dày (COD)", "action": "send", "payload": "Chốt giúp em combo dạ dày (COD). Em gửi SĐT + địa chỉ ngay."})
-            else:
-                ctas.append({"label": "Chốt đơn (COD)", "action": "send", "payload": "Chốt đơn giúp em (COD). Em gửi SĐT + địa chỉ ngay."})
+        add_order_cta()
         add_contacts()
         return ctas
 
-    # support: contact only
     if stage == "support":
         add_contacts()
         return ctas
 
-    # fallback
+    # fallback (legacy)
     return build_contextual_ctas(meta, topic_key, profile_mode, sales_signal, turns)
+
 import tools
+
 
 load_dotenv()
 
