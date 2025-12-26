@@ -1,490 +1,321 @@
-from __future__ import annotations
-import os
-import json
-from pathlib import Path
+# app/backend/app.py
+import os, re, time
+from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-from dotenv import load_dotenv
 
-from data_store import DataStore
-from router import Router
-from llm import generate_reply
-from agent_intent import extract_intent
-from agent_compose import compose_reply
-import memory_store
+# ---------- App ----------
+app = Flask(__name__, static_folder="../frontend", static_url_path="")
+# ensure Vietnamese chars in JSON
+try:
+    app.json.ensure_ascii = False  # Flask 2.3+
+except Exception:
+    pass
 
-# ---------- Contextual CTA helpers ----------
-def _detect_topic_key(text: str) -> str:
-    t = (text or "").lower()
-    # digestive
-    if any(k in t for k in ["dạ dày", "bao tử", "trào ngược", "đầy hơi", "ợ chua", "viêm loét"]):
-        return "da_day"
-    # diabetes / sugar
-    if any(k in t for k in ["tiểu đường", "đường huyết", "huyết áp đường", "đái tháo đường"]):
-        return "duong_huyet"
-    # lipid
-    if any(k in t for k in ["mỡ máu", "cholesterol", "triglycerid", "gan nhiễm mỡ"]):
-        return "mo_mau"
-    # joints
-    if any(k in t for k in ["xương khớp", "khớp", "thoái hóa", "đau lưng", "gout"]):
-        return "xuong_khop"
-    # sleep
-    if any(k in t for k in ["mất ngủ", "ngủ", "stress", "lo âu"]):
-        return "giac_ngu"
-    # buy / payment
-    if any(k in t for k in ["mua", "đặt hàng", "thanh toán", "cod", "ship", "giao hàng", "đổi trả"]):
-        return "mua_hang"
-    # agency/business
-    if any(k in t for k in ["đại lý", "cộng tác", "hoa hồng", "tuyến trên", "kinh doanh"]):
-        return "kinh_doanh"
+# ---------- ENV / Config ----------
+PROFILE_MODE = (os.getenv("PROFILE_MODE","SALES") or "SALES").upper()  # SOFT | SALES
+BOT_NAME = os.getenv("BOT_NAME","Trợ lý AI TPCN")
+BOT_TAG = os.getenv("BOT_TAG","AI-CSKH-TPCN")
+ZALO_URL = os.getenv("ZALO_OA_URL", os.getenv("ZALO_URL",""))
+FANPAGE_URL = os.getenv("FANPAGE_URL","")
+ORDER_URL = os.getenv("ORDER_URL","")
+HOTLINE = os.getenv("HOTLINE","")
+
+# Optional OpenAI (works if key present)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY","").strip()
+try:
+    from openai import OpenAI  # type: ignore
+    _openai_ok = bool(OPENAI_API_KEY)
+    _client = OpenAI(api_key=OPENAI_API_KEY) if _openai_ok else None
+except Exception:
+    _openai_ok = False
+    _client = None
+
+# ---------- Minimal Catalog (demo) ----------
+# Replace links via ENV if you want per-combo landing URLs
+CATALOG = {
+  "da_day": {
+    "label":"Dạ dày",
+    "combo_name":"Combo Hỗ Trợ Dạ Dày",
+    "combo_price":"1.100.000 VNĐ",
+    "combo_compare":"1.130.000 VNĐ",
+    "combo_link": os.getenv("COMBO_DA_DAY_URL",""),
+    "items":[
+      {"name":"Viên hỗ trợ dạ dày", "price":"650.000 VNĐ", "benefit":"Hỗ trợ giảm cảm giác nóng rát, bảo vệ niêm mạc.", "usage":"Uống 2 viên/lần, ngày 2 lần trước ăn."},
+      {"name":"Hỗ trợ gan – giải độc", "price":"480.000 VNĐ", "benefit":"Hỗ trợ chức năng gan, giảm nóng trong.", "usage":"Uống 2 viên/ngày sau ăn."},
+    ],
+    "plan":[("7 ngày","Giảm cảm giác cồn cào"),("14 ngày","Ăn uống dễ chịu hơn"),("30 ngày","Hỗ trợ bảo vệ niêm mạc dạ dày"),("60 ngày","Duy trì nếu ăn uống điều độ")],
+    "note":"Tránh rượu bia, đồ cay nóng. Nếu đau dữ dội/nôn ra máu/đi ngoài phân đen nên đi khám."
+  },
+  "xuong_khop": {
+    "label":"Xương khớp",
+    "combo_name":"Combo Hỗ Trợ Xương Khớp",
+    "combo_price":"1.190.000 VNĐ",
+    "combo_compare":"",
+    "combo_link": os.getenv("COMBO_XUONG_KHOP_URL",""),
+    "items":[
+      {"name":"TPBVSK Xương Khớp A", "price":"690.000 VNĐ", "benefit":"Hỗ trợ giảm khó chịu, hỗ trợ vận động.", "usage":"Uống 2 viên/ngày sau ăn."},
+      {"name":"TPBVSK Dẻo Khớp B", "price":"550.000 VNĐ", "benefit":"Hỗ trợ bôi trơn khớp, duy trì sụn khớp.", "usage":"Uống 1 viên/ngày sau ăn."},
+    ],
+    "plan":[("7 ngày","Giảm ê mỏi sau vận động"),("14 ngày","Đỡ cứng khớp buổi sáng"),("30 ngày","Hỗ trợ vận động linh hoạt hơn")],
+    "note":"Nếu sưng nóng đỏ khớp/đau tăng nhanh nên đi khám để loại trừ viêm cấp."
+  },
+  "duong_huyet": {"label":"Đường huyết","combo_name":"Combo Hỗ Trợ Đường Huyết","combo_price":"1.250.000 VNĐ","combo_compare":"","combo_link":os.getenv("COMBO_DUONG_HUYET_URL",""),"items":[],"plan":[],"note":"Không thay thế thuốc điều trị. Cần theo dõi đường huyết đều."},
+  "mo_mau": {"label":"Mỡ máu","combo_name":"Combo Hỗ Trợ Mỡ Máu","combo_price":"1.180.000 VNĐ","combo_compare":"","combo_link":os.getenv("COMBO_MO_MAU_URL",""),"items":[],"plan":[],"note":"Kết hợp ăn nhạt, giảm mỡ động vật."},
+  "gan": {"label":"Gan","combo_name":"Combo Hỗ Trợ Gan","combo_price":"990.000 VNĐ","combo_compare":"","combo_link":os.getenv("COMBO_GAN_URL",""),"items":[],"plan":[],"note":"Hạn chế bia rượu, ngủ đủ."},
+  "giac_ngu": {"label":"Giấc ngủ","combo_name":"Combo Hỗ Trợ Giấc Ngủ","combo_price":"890.000 VNĐ","combo_compare":"","combo_link":os.getenv("COMBO_GIAC_NGU_URL",""),"items":[],"plan":[],"note":"Giữ lịch ngủ đều, giảm caffeine sau 14h."},
+}
+
+TOPIC_PATTERNS = [
+  ("da_day", r"(dạ dày|trào ngược|đầy hơi|ợ chua|đau bụng|viêm dạ dày)"),
+  ("xuong_khop", r"(xương khớp|khớp|đau khớp|thoái hóa|cứng khớp|đau gối|đau vai|đau lưng)"),
+  ("duong_huyet", r"(tiểu đường|đường huyết|đái tháo đường|hba1c)"),
+  ("mo_mau", r"(mỡ máu|cholesterol|triglycerid)"),
+  ("gan", r"(gan|men gan|nóng trong|giải độc)"),
+  ("giac_ngu", r"(mất ngủ|khó ngủ|ngủ không sâu|stress|lo âu)"),
+]
+BUY_PAT = r"(mua|đặt|chốt|ship|giao|cod|thanh toán|giá|ưu đãi|link|đơn hàng)"
+OK_PAT = r"^(ok|oke|được|chốt|mua|lấy|đặt|gửi link|gửi đơn|tư vấn 1-1)$"
+
+# ---------- Simple memory (per visitor via cookie id) ----------
+_MEM = {}
+
+def _sid():
+    sid = request.cookies.get("sid")
+    if sid:
+        return sid
+    # fallback: simple fingerprint
+    ip = request.headers.get("x-forwarded-for", request.remote_addr) or "0"
+    ua = request.headers.get("user-agent","")[:40]
+    return f"{hash(ip+ua)%10**10}"
+
+def _mem():
+    sid=_sid()
+    if sid not in _MEM:
+        _MEM[sid]={"turns":0,"stage":"identify","topic":"","asked":0,"last_offer_topic":"","last_ctas":[]}
+    return _MEM[sid]
+
+def detect_topic(text: str):
+    t=(text or "").lower()
+    for k,pat in TOPIC_PATTERNS:
+        if re.search(pat, t, re.I):
+            return k
     return ""
 
-def _detect_pronoun(text: str) -> str:
-    t = (text or "").lower()
-    if "chị" in t and "anh" not in t:
-        return "chị"
-    if "anh" in t and "chị" not in t:
-        return "anh"
-    return "anh/chị"
+def detect_stage(text: str, mem: dict):
+    t=(text or "").lower()
+    topic = mem.get("topic","")
+    stage = mem.get("stage","identify")
+    buy = bool(re.search(BUY_PAT, t, re.I))
+    ok = bool(re.search(OK_PAT, t.strip(), re.I))
+    # Stage jump signals
+    if buy:
+        return "close"
+    if stage in ("offer","close") and ok:
+        return "close"
+    if topic and stage == "identify":
+        return "suggest"
+    if stage == "suggest" and mem.get("asked",0) >= 1:
+        return "offer"
+    return stage
 
-def build_contextual_ctas(meta: dict, topic_key: str, profile_mode: str, sales_signal: bool, turns: int) -> list:
-    # CTA actions: send (prefill), link (open), handoff (open contact), order (send order intent)
-    ctas = []
+def build_ctas(topic_key: str, stage: str):
+    ctas=[]
     # topic CTA
-    topic_map = {
-        "da_day": ("Xem combo dạ dày", "Đau dạ dày / trào ngược dùng combo nào?"),
-        "duong_huyet": ("Xem combo đường huyết", "Người bị tiểu đường dùng combo nào?"),
-        "mo_mau": ("Xem combo mỡ máu", "Mỡ máu cao dùng combo nào?"),
-        "xuong_khop": ("Xem combo xương khớp", "Đau xương khớp dùng sản phẩm/combo nào?"),
-        "giac_ngu": ("Xem giải pháp giấc ngủ", "Mất ngủ/lo âu nên dùng sản phẩm nào?"),
-    }
-    if topic_key in topic_map:
-        label, payload = topic_map[topic_key]
-        ctas.append({"label": label, "action": "send", "payload": payload})
-
-    # purchase CTA appears only when meaningful (sales signal OR user asked buy OR turns>=1 and topic known)
-    if profile_mode == "SALES" and (sales_signal or topic_key in ["mua_hang", "kinh_doanh"] or (turns >= 1 and topic_key)):
-        ctas.append({"label": "Đặt nhanh", "action": "send", "payload": "Em muốn đặt hàng nhanh. Hướng dẫn em cách chốt đơn."})
-
-    # handoff links appear when topic known or user is in buying flow
-    if topic_key or sales_signal or turns >= 1:
-        if meta.get("zalo"):
-            ctas.append({"label": "Zalo 1-1", "action": "link", "url": str(meta.get("zalo"))})
-        if meta.get("fanpage"):
-            ctas.append({"label": "Fanpage", "action": "link", "url": str(meta.get("fanpage"))})
+    if topic_key and stage in ("suggest","offer"):
+        label = f"Xem combo {CATALOG[topic_key]['label'].lower()}" if topic_key in CATALOG else "Xem combo"
+        ctas.append({"label": label, "action":"send", "payload": f"Cho em xem combo {CATALOG[topic_key]['label'].lower()} nhé"})
+    # order/contact
+    def add_contacts():
+        if ZALO_URL: ctas.append({"label":"Zalo 1-1","action":"link","url":ZALO_URL})
+        if FANPAGE_URL: ctas.append({"label":"Fanpage","action":"link","url":FANPAGE_URL})
+        if HOTLINE: ctas.append({"label":"Gọi hotline","action":"link","url": f"tel:{HOTLINE}"})
+    if PROFILE_MODE=="SALES":
+        if stage in ("offer","close"):
+            url = ORDER_URL or ZALO_URL or FANPAGE_URL
+            if url:
+                ctas.insert(0, {"label":"Đặt nhanh","action":"link","url":url})
+        if stage in ("offer","close","support"):
+            add_contacts()
+    else:
+        # SOFT: no order CTA
+        if stage in ("offer","support"):
+            add_contacts()
     return ctas
 
+def soft_prefix():
+    return "" if PROFILE_MODE=="SALES" else "Dạ "
 
-def detect_stage(user_text: str, intent_json: dict, turns: int, combos: list, products: list) -> str:
-    """Heuristic stage for sales UX:
-    - identify: chào hỏi / chưa rõ vấn đề / cần hỏi thêm
-    - suggest: đã biết topic nhưng chưa đưa offer cụ thể
-    - offer: đã đưa combo/sản phẩm cụ thể
-    - close: user có tín hiệu mua/đặt hoặc đã để lại SĐT
-    - support: mua hàng/thanh toán/chính sách
-    """
-    t = (user_text or "").lower()
-    intent = (intent_json or {}).get("intent") or "unknown"
-    need_clarify = bool((intent_json or {}).get("need_clarify"))
-    sales_signal = bool((intent_json or {}).get("sales_signal"))
-    slots = (intent_json or {}).get("slots") or {}
-    has_phone = bool(str(slots.get("phone", "") or "").strip())
+def reply_identify():
+    return f"{soft_prefix()}chào anh/chị 😊 Em là **{BOT_NAME}** (TPCN thiên nhiên). Anh/chị đang quan tâm nhóm nào ạ: dạ dày/đường huyết/mỡ máu/gan/xương khớp/giấc ngủ?"
 
-    if intent == "product_select":
-        return "close"
+def reply_suggest(topic_key: str, mem: dict):
+    label = CATALOG.get(topic_key,{}).get("label","vấn đề này")
+    # ask 1 focused question
+    q1 = {
+      "da_day":"Anh/chị thường khó chịu kiểu nào: **ợ chua/nóng rát/đầy hơi/đau âm ỉ** ạ?",
+      "xuong_khop":"Anh/chị đang khó chịu chủ yếu ở **gối/lưng/vai/cổ tay** hay **cứng khớp buổi sáng** ạ?",
+      "duong_huyet":"Anh/chị có đang theo dõi **đường huyết** gần đây không ạ?",
+      "mo_mau":"Anh/chị có kết quả **mỡ máu** gần đây (cholesterol/triglycerid) không ạ?",
+      "gan":"Anh/chị đang quan tâm **men gan/nóng trong/giải độc** hay **gan nhiễm mỡ** ạ?",
+      "giac_ngu":"Anh/chị khó ngủ do **stress/đầu óc suy nghĩ** hay **thức giấc giữa đêm** ạ?",
+    }.get(topic_key, "Anh/chị cho em biết triệu chứng cụ thể nhất đang gặp ạ?")
+    mem["asked"]=mem.get("asked",0)+1
+    return f"Về **{label}**, em hỏi nhanh 1 câu để tư vấn đúng hơn nhé: {q1}"
 
-    if intent in ("buy_payment", "agency_policy", "hard_business", "complaint"):
-        return "support"
+def render_combo(topic_key: str):
+    c = CATALOG.get(topic_key)
+    if not c:
+        return "Dạ em chưa có combo phù hợp trong hệ thống. Anh/chị cho em biết thêm nhu cầu ạ?"
+    lines=[]
+    lines.append(f"**{c['combo_name']}**")
+    if c.get("combo_compare"):
+        lines.append(f"- **Giá:** {c['combo_price']} (giá gốc: {c['combo_compare']})")
+    else:
+        lines.append(f"- **Giá:** {c['combo_price']}")
+    if c.get("items"):
+        lines.append("- **Gồm:**")
+        for it in c["items"]:
+            lines.append(f"  - **{it['name']}** ({it['price']})")
+            if it.get("benefit"): lines.append(f"    - Lợi ích: {it['benefit']}")
+            if it.get("usage"): lines.append(f"    - Cách dùng: {it['usage']}")
+    if c.get("plan"):
+        lines.append("- **Kế hoạch tham khảo:**")
+        for d,txt in c["plan"]:
+            lines.append(f"  - {d}: {txt}")
+    if c.get("note"):
+        lines.append(f"⚠️ **Lưu ý:** {c['note']}")
+    if c.get("combo_link"):
+        lines.append(f"👉 Xem chi tiết: [{c['combo_name']}]({c['combo_link']})")
+    return "\n".join(lines)
 
-    if need_clarify:
-        return "identify"
+def reply_offer(topic_key: str):
+    if PROFILE_MODE=="SALES":
+        tail="\n\nAnh/chị muốn **em gửi link đặt hàng + ưu đãi hiện tại** không ạ?"
+    else:
+        tail="\n\nNếu anh/chị muốn, em gửi **link xem chi tiết** và hướng dẫn dùng phù hợp ạ."
+    return render_combo(topic_key) + tail
 
-    if turns == 0 and len(t.strip()) <= 12 and any(x in t for x in ["chào", "hi", "hello", "alo"]):
-        return "identify"
+def reply_close(topic_key: str):
+    if PROFILE_MODE=="SALES":
+        url = ORDER_URL or CATALOG.get(topic_key,{}).get("combo_link") or ZALO_URL or FANPAGE_URL
+        if url:
+            return f"Dạ được ạ ✅ Em gửi anh/chị link **đặt nhanh** ở đây: {url}\n\nAnh/chị cho em xin *tỉnh/thành + SĐT* để em hỗ trợ chốt đơn/ship nhanh nhé."
+        return "Dạ được ạ ✅ Anh/chị cho em xin *tỉnh/thành + SĐT* để em hỗ trợ chốt đơn nhé."
+    else:
+        return "Dạ em sẵn sàng hỗ trợ 😊 Anh/chị cho em biết thêm nhu cầu/độ tuổi/đang dùng thuốc gì (nếu có) để em hướng dẫn an toàn hơn ạ."
 
-    if any(k in t for k in ["đặt", "mua", "chốt", "lên đơn", "ship", "cod", "thanh toán", "giá bao nhiêu", "link"]):
-        return "close"
-
-    if sales_signal or has_phone:
-        return "close"
-
-    if combos or products:
-        return "offer"
-
-    if _detect_topic_key(user_text):
-        return "suggest"
-
-    return "identify"
-
-
-
-
-def build_stage_ctas(meta: dict, topic_key: str, profile_mode: str, stage: str, sales_signal: bool, turns: int) -> list:
-    """
-    Stage-based contextual CTAs.
-    - identify: hide
-    - suggest: show ONLY "Xem combo ..." for detected topic
-    - offer: show topic CTA + (SALES) order CTA + contacts
-    - close: show (SALES) order CTA + contacts
-    - support: show contacts
-    """
-    meta = meta or {}
-    ctas: list = []
-
-    topic_labels = {
-        "da_day": ("Xem combo dạ dày", "Đau dạ dày / trào ngược dùng combo nào?"),
-        "duong_huyet": ("Xem combo đường huyết", "Người bị tiểu đường dùng combo nào?"),
-        "mo_mau": ("Xem combo mỡ máu", "Mỡ máu cao dùng combo nào?"),
-        "xuong_khop": ("Xem combo xương khớp", "Đau xương khớp dùng sản phẩm/combo nào?"),
-        "giac_ngu": ("Xem giải pháp giấc ngủ", "Mất ngủ/lo âu nên dùng sản phẩm nào?"),
-    }
-
-    def add_contacts():
-        # contacts are optional; only add if configured
-        if meta.get("zalo"):
-            ctas.append({"label": "Zalo 1-1", "action": "link", "url": str(meta.get("zalo"))})
-        if meta.get("fanpage"):
-            ctas.append({"label": "Fanpage", "action": "link", "url": str(meta.get("fanpage"))})
-
-    def add_topic_cta():
-        if topic_key in topic_labels:
-            label, payload = topic_labels[topic_key]
-            ctas.append({"label": label, "action": "send", "payload": payload})
-
-    def add_order_cta():
-        if profile_mode != "SALES":
-            return
-        # Use send action so frontend can just push a message to /chat
-        if topic_key == "da_day":
-            ctas.append({"label": "Đặt combo dạ dày", "action": "send", "payload": "Em muốn đặt combo dạ dày. Nhờ em chốt đơn giúp (COD) nhé."})
-        elif topic_key == "xuong_khop":
-            ctas.append({"label": "Đặt combo xương khớp", "action": "send", "payload": "Em muốn đặt combo xương khớp. Nhờ em chốt đơn giúp (COD) nhé."})
-        else:
-            ctas.append({"label": "Đặt nhanh", "action": "send", "payload": "Em muốn đặt hàng nhanh. Nhờ em chốt đơn giúp (COD) nhé."})
-
-    # ---- stage rules ----
-    stage = (stage or "identify").strip().lower()
-
-    if stage == "identify":
-        return []
-
-    if stage == "suggest":
-        add_topic_cta()
-        return ctas
-
-    if stage == "offer":
-        add_topic_cta()
-        add_order_cta()
-        add_contacts()
-        return ctas
-
-    if stage == "close":
-        add_order_cta()
-        add_contacts()
-        return ctas
-
-    if stage == "support":
-        add_contacts()
-        return ctas
-
-    # fallback (legacy)
-    return build_contextual_ctas(meta, topic_key, profile_mode, sales_signal, turns)
-
-import tools
-
-
-load_dotenv()
-
-APP_DIR = Path(__file__).parent.resolve()
-DATA_DIR = os.getenv("DATA_DIR", str((APP_DIR / ".." / ".." / "data_kit" / "data").resolve()))
-PROFILE_MODE = os.getenv("PROFILE_MODE", "SALES").upper()
-AGENT_MODE = os.getenv("AGENT_MODE", "1").strip()  # "1"=agent on
-
-def _cfg_dir():
-    # Prefer config bundled with data_kit (data_kit/config) to keep repo root clean
+def maybe_llm(user_text: str, mem: dict, topic_key: str, stage: str):
+    """Optional: use OpenAI to paraphrase into more natural Vietnamese while respecting stage rules."""
+    if not _openai_ok or not _client:
+        return None
+    # Keep it short and sales-safe
+    sys = f"""Bạn là trợ lý CSKH TPCN tại Việt Nam.
+PROFILE_MODE={PROFILE_MODE}. STAGE={stage}. TOPIC={topic_key or 'none'}.
+Quy tắc:
+- Không chào lại nếu đã có ít nhất 1 lượt.
+- Ưu tiên hỏi tối đa 1 câu làm rõ ở STAGE=suggest; nếu đủ thì sang offer.
+- Ở offer: đưa đúng 1 phương án chính, trình bày gọn (không lan man), không hứa khỏi bệnh.
+- Ở close: xin thông tin chốt đơn; không ép.
+- Văn phong thân thiện, chuyên nghiệp, ngắn gọn.
+"""
+    draft = {
+      "identify": reply_identify(),
+      "suggest": reply_suggest(topic_key, {"asked":0}),
+      "offer": reply_offer(topic_key),
+      "close": reply_close(topic_key),
+      "support": "Dạ anh/chị cần hỗ trợ mua hàng/ship/COD hay chính sách ạ?"
+    }.get(stage, reply_identify())
     try:
-        d = Path(DATA_DIR).resolve()
-        dk = d.parent / "config"
-        if dk.exists():
-            return dk
+        r=_client.responses.create(
+            model=os.getenv("OPENAI_MODEL","gpt-4o-mini"),
+            input=[{"role":"system","content":sys},
+                   {"role":"user","content":f"Người dùng: {user_text}\n\nHãy viết lại câu trả lời sau cho tự nhiên hơn (giữ nguyên ý):\n---\n{draft}\n---"}],
+            temperature=0.5,
+        )
+        out=r.output_text.strip()
+        return out or None
     except Exception:
-        pass
-    # fallback: app/config
-    return (APP_DIR.parent / "config")
+        return None
 
-
-def load_profile():
-    cfg_dir = _cfg_dir()
-    fname = "06_AI_PROFILE_SALES.json" if PROFILE_MODE == "SALES" else "06_AI_PROFILE_SOFT.json"
-    return json.loads((cfg_dir / fname).read_text(encoding="utf-8"))
-
-def load_router(alias_tags):
-    cfg_dir = _cfg_dir()
-    return Router.load(str(cfg_dir / "07_INTENT_ROUTER.json"), alias_tags)
-
-app = Flask(__name__)
-CORS(app)
-
-store = DataStore.load(DATA_DIR)
-profile = load_profile()
-router = load_router(store.alias_tags)
-
-def build_handoff(user_text: str, intent: str):
-    # if intent is handoff-type OR routing keywords match
-    if intent in ("kinh_doanh_dai_ly","khieu_nai","yeu_cau_cam_ket_ket_qua"):
-        r = store.best_routing(user_text)
-        return r
-    # safety triggers => handoff if available
-    if router.is_safety_trigger(user_text):
-        r = store.best_routing(user_text) or store.best_routing("mang thai;cho con bú;dị ứng")
-        return r
-    return None
+# ---------- Routes ----------
+@app.get("/")
+def root():
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.get("/health")
 def health():
-    return {"ok": True, "profile": profile.get("profile_id"), "data_dir": DATA_DIR}
+    return jsonify({
+        "ok": True,
+        "profile_mode": PROFILE_MODE,
+        "openai_enabled": _openai_ok,
+        "ts": datetime.utcnow().isoformat()+"Z"
+    })
 
 @app.post("/chat")
 def chat():
-    body = request.get_json(force=True, silent=True) or {}
-    user_text = str(body.get("message", "")).strip()
-    if not user_text:
-        return jsonify({"reply": "Anh/chị cho em xin câu hỏi cụ thể để em hỗ trợ nhé 😊"}), 200
+    data = request.get_json(silent=True) or {}
+    msg = (data.get("message") or "").strip()
+    if not msg:
+        return jsonify({"reply":"Dạ anh/chị gửi giúp em nội dung cần tư vấn nhé 😊", "meta":{"stage":"identify","topic":"","ctas":[]}})
 
-    # session id for memory (frontend may pass session_id; fallback to client ip)
-    session_id = str(body.get("session_id") or request.headers.get("X-Session-Id") or request.remote_addr or "anon").strip()
-    ctx = memory_store.get(session_id)
-    turns = int(ctx.get("turns", 0) or 0)
+    mem=_mem()
+    mem["turns"]=mem.get("turns",0)+1
 
-    # ---- quick product selection (from previous offer) ----
-    def _norm(s: str) -> str:
-        s = (s or "").strip().lower()
-        s = re.sub(r"\s+", " ", s)
-        return s
-    last_offer = ctx.get("last_offer_products") or []
-    matched_product = None
-    if last_offer:
-        ut = _norm(user_text)
-        for pn in last_offer:
-            if not pn:
-                continue
-            pnn = _norm(str(pn))
-            if ut == pnn or (len(pnn) >= 6 and pnn in ut) or (len(ut) >= 6 and ut in pnn):
-                matched_product = str(pn)
-                break
+    # topic detect (persist once found unless user switches)
+    new_topic = detect_topic(msg)
+    if new_topic:
+        mem["topic"]=new_topic
 
+    # stage engine
+    mem["stage"]=detect_stage(msg, mem)
+    stage=mem["stage"]
+    topic=mem.get("topic","")
 
-    # ---- AGENT PIPELINE (default) ----
-    if AGENT_MODE != "0":
-        if matched_product:
-            intent_json = {
-                "intent": "product_select",
-                "problem_key": str(ctx.get("problem_key","") or ""),
-                "slots": {"product_name": matched_product},
-                "need_clarify": False,
-                "clarify_questions": [],
-                "risk_flags": [],
-                "sales_signal": True,
-                "handoff": False,
-                "tone": "friendly"
-            }
+    # Build reply deterministically
+    if mem["turns"] <= 1:
+        reply = reply_identify()
+        stage="identify"
+        topic=topic or ""
+        mem["stage"]=stage
+    else:
+        if stage == "identify":
+            reply = reply_identify()
+        elif stage == "suggest":
+            reply = reply_suggest(topic, mem)
+        elif stage == "offer":
+            reply = reply_offer(topic)
+        elif stage == "close":
+            reply = reply_close(topic)
         else:
-            intent_json = extract_intent(user_text=user_text, ctx=ctx, meta=store.meta, profile_mode=PROFILE_MODE)
+            reply = "Dạ anh/chị cho em biết thêm nhu cầu để em hỗ trợ tốt hơn ạ 😊"
 
-        # prevent looping clarify: only ask clarify once, then proceed with best effort
-        try:
-            if bool(intent_json.get("need_clarify")) and int(ctx.get("clarify_rounds",0) or 0) >= 1:
-                intent_json["need_clarify"] = False
-        except Exception:
-            pass
+    # Optional: polish by LLM
+    polished = maybe_llm(msg, mem, topic, stage)
+    if polished:
+        reply = polished
 
-        # if previous turn asked clarify, merge user answer
-        # (very lightweight: store pending_questions; agent will re-extract with ctx)
-        if ctx.get("pending_clarify"):
-            ctx.pop("pending_clarify", None)
+    ctas = build_ctas(topic, stage)
+    meta = {
+        "stage": stage,
+        "topic": topic,
+        "profile_mode": PROFILE_MODE,
+        "ctas": ctas,
+        "zalo": ZALO_URL,
+        "fanpage": FANPAGE_URL,
+        "order": ORDER_URL,
+    }
 
-        # need clarify => ask 1-2 smart questions
-        if intent_json.get("need_clarify"):
-            qs = intent_json.get("clarify_questions") or ["Anh/chị cho em biết mình đang cần hỗ trợ vấn đề gì ạ?"]
-            memory_store.update(session_id, {
-                "turns": turns + 1,
-                "pending_clarify": True,
-                "clarify_rounds": int(ctx.get("clarify_rounds",0) or 0) + 1,
-                "problem_key": intent_json.get("problem_key") or ctx.get("problem_key",""),
-                "last_intent": intent_json.get("intent","unknown"),
-                "tone": intent_json.get("tone","friendly"),
-            })
-            # Ask as 1 message (natural)
-            reply = "Dạ em hỏi nhanh 1–2 ý để tư vấn đúng hơn ạ:\n- " + "\n- ".join(qs)
-            topic_key2 = _detect_topic_key(user_text) or str(intent_json.get("problem_key") or ctx.get("problem_key") or "")
-            return jsonify({"reply": reply, "meta": {"topic": topic_key2, "pronoun": ctx.get("pronoun","anh/chị"), "stage": "identify", "ctas": []}}), 200
+    resp = jsonify({"reply": reply, "meta": meta})
+    # set sid cookie if missing
+    if not request.cookies.get("sid"):
+        resp.set_cookie("sid", _sid(), max_age=60*60*24*30, samesite="Lax")
+    return resp
 
-        # tool use
-        intent = (intent_json.get("intent") or "unknown").strip()
-        problem_key = (intent_json.get("problem_key") or ctx.get("problem_key") or "").strip()
-
-        combos = []
-        products = []
-        faqs = []
-        lead_saved = None
-
-        # policy / FAQ
-        if intent in ("buy_payment",):
-            faqs = tools.tool_get_faq(store, "mua_hang_thanh_toan", limit=3) or tools.tool_get_faq(store, "mua_hang", limit=3)
-        if intent in ("agency_policy","hard_business","complaint"):
-            faqs = tools.tool_get_faq(store, "kinh_doanh_dai_ly", limit=3) or tools.tool_get_faq(store, "khieu_nai", limit=3)
-
-        # combo/product retrieval
-        if intent in ("combo","product"):
-            if problem_key:
-                combos = tools.tool_get_combo(store, problem_key, limit=2)
-                if combos:
-                    # expand products in combo
-                    for c in combos:
-                        products += tools.tool_get_combo_products(store, c)
-                else:
-                    products = tools.tool_search_products(store, problem_key, limit=4)
-
-        # handoff decision (reuse existing)
-        handoff = build_handoff(user_text, intent)
-
-        # sales lead capture (soft) if signal and has phone in slots
-        slots = intent_json.get("slots") or {}
-        sales_signal = bool(intent_json.get("sales_signal"))
-        if sales_signal and PROFILE_MODE == "SALES":
-            phone = str(slots.get("phone","") or "").strip()
-            if phone:
-                lead_saved = tools.tool_save_lead(store.meta, {
-                    "name": slots.get("name",""),
-                    "phone": phone,
-                    "area": slots.get("area",""),
-                    "need": problem_key or intent
-                })
-
-        # compose
-        # topic/pronoun for contextual CTA
-        topic_key = _detect_topic_key(user_text) or str(problem_key or "")
-        pronoun = ctx.get("pronoun") or _detect_pronoun(user_text)
-        ctx["pronoun"] = pronoun
-        memory_store.set(session_id, ctx)
-
-        skip_llm = False
-        if intent == "product_select":
-            sel = (intent_json.get("slots") or {}).get("product_name") or ""
-            ps = tools.tool_search_products(store, str(sel), limit=1)
-            p = ps[0] if ps else None
-            if p:
-                name = str(p.get("name","") or sel)
-                price = str(p.get("price","") or "")
-                link = str(p.get("link","") or "")
-                benefits = str(p.get("benefits") or p.get("effect") or "")
-                usage = str(p.get("usage") or p.get("how_to_use") or "")
-                ing = str(p.get("ingredients") or p.get("components") or "")
-                reply = f"""Dạ em ghi nhận anh/chị đang chọn **{name}** ✅
-
-**Tóm tắt nhanh**
-- Giá: {price}
-- Thành phần chính: {ing}
-- Lợi ích: {benefits}
-- Cách dùng: {usage}
-
-Anh/chị cho em xin **SĐT + Tỉnh/TP + địa chỉ nhận hàng** để em lên đơn (COD) giúp mình nhé 😊
-(Link sản phẩm: {link})"""
-            else:
-                reply = "Dạ em ghi nhận anh/chị chọn **{sel}** ✅ Anh/chị cho em xin SĐT + địa chỉ để em lên đơn (COD) giúp mình nhé 😊".format(sel=sel)
-            skip_llm = True
-
-        if not skip_llm:
-            reply = compose_reply(
-            meta=store.meta,
-            profile=profile,
-            user_text=user_text,
-            intent_json=intent_json,
-            combos=combos,
-            products=products,
-            faqs=faqs,
-            handoff=handoff,
-            ctx={"turns": turns, "problem_key": problem_key, "last_intent": intent, "tone": intent_json.get("tone","friendly")},
-            lead_saved=lead_saved
-        )
-
-        memory_store.update(session_id, {
-            "turns": turns + 1,
-            "problem_key": problem_key or ctx.get("problem_key",""),
-            "last_intent": intent,
-            "tone": intent_json.get("tone","friendly"),
-        })
-        
-    # ---------- stage-based CTA ----------
-    topic_key2 = _detect_topic_key(user_text) or str(problem_key or ctx.get("problem_key") or "")
-    stage = detect_stage(user_text=user_text, intent_json=intent_json, turns=turns, combos=combos, products=products)
-    ctas = build_stage_ctas(store.meta, topic_key2, PROFILE_MODE, stage, bool(intent_json.get("sales_signal")), turns)
-
-    return jsonify({
-        "reply": reply,
-        "meta": {
-            "topic": topic_key2,
-            "pronoun": ctx.get("pronoun", "anh/chị"),
-            "stage": stage,
-            "ctas": ctas
-        }
-    }), 200
-    # ---- FALLBACK (legacy router) ----
-    intent, problem = router.classify(user_text)
-    problem_key = problem or ""
-
-    combos = []
-    products = []
-    faqs = []
-
-    # flows (simplified implementation):
-    if intent in ("huong_dan_mua_hang",):
-        faqs = store.faq_by_intent("mua_hang", limit=3)
-    elif intent in ("huong_dan_thanh_toan",):
-        faqs = store.faq_by_intent("thanh_toan", limit=3)
-    elif intent in ("chinh_sach_van_chuyen_doi_tra",):
-        faqs = store.faq_by_intent("van_chuyen", limit=2) + store.faq_by_intent("doi_tra", limit=2)
-    elif intent in ("tu_van_combo",):
-        if not problem_key:
-            # ask clarifying question without calling LLM
-            return jsonify({"reply": "Dạ anh/chị đang muốn hỗ trợ vấn đề nào ạ (ví dụ: tiểu đường, dạ dày, mỡ máu, gan, xương khớp…)? 😊"}), 200
-        combos = store.find_combos_by_problem(problem_key, limit=2)
-        if combos:
-            products = []
-            for c in combos:
-                products += store.expand_combo_products(c)
-        else:
-            products = store.find_products_by_problem(problem_key, limit=3)
-            intent = "tu_van_san_pham"
-    elif intent in ("tu_van_san_pham",):
-        if not problem_key:
-            return jsonify({"reply": "Dạ anh/chị đang gặp vấn đề nào để em gợi ý đúng (ví dụ: dạ dày, trào ngược, tiểu đường…)? 😊"}), 200
-        products = store.find_products_by_problem(problem_key, limit=3)
-
-    # handoff decision
-    handoff = build_handoff(user_text, intent)
-
-    # generate reply with LLM (natural language), constrained by context
-    try:
-        reply = generate_reply(profile=profile, meta=store.meta, intent=intent, user_text=user_text,
-                               combos=combos, products=products, faqs=faqs, handoff=handoff)
-    except Exception as e:
-        # graceful fallback
-        reply = "Dạ hệ thống đang bận một chút. Anh/chị cho em xin SĐT để bên em hỗ trợ nhanh qua hotline nhé ạ 😊"
-    # build contextual CTAs
-    topic_key2 = _detect_topic_key(user_text) or str(ctx.get("problem_key") or "")
-    ctas = build_contextual_ctas(store.meta, topic_key2, PROFILE_MODE, bool(body.get("sales_signal") or False) or bool((locals().get("intent_json") or {}).get("sales_signal")), turns)
-    return jsonify({"reply": reply, "meta": {"topic": topic_key2, "pronoun": ctx.get("pronoun","anh/chị"), "ctas": ctas}}), 200
-
-# Serve frontend for quick demo (optional)
-@app.get("/")
-def index():
-    return send_from_directory(str(APP_DIR.parent / "frontend"), "index.html")
-
-@app.get("/<path:filename>")
-def static_files(filename):
-    return send_from_directory(str(APP_DIR.parent / "frontend"), filename)
+# Static files (css/js/img)
+@app.get("/<path:path>")
+def static_proxy(path):
+    return send_from_directory(app.static_folder, path)
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", "8080"))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    # Render will use gunicorn; local run:
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT","10000")), debug=False)

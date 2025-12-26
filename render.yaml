@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r app/backend/requirements.txt
-    startCommand: python app/backend/app.py
+    startCommand: gunicorn app.backend.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
