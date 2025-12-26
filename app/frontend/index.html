@@ -787,6 +787,7 @@
       const res = await fetch(API + "/chat", {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
+        credentials:"same-origin",
         body: JSON.stringify({ message: m, session_id: getSessionId() })
       });
       const data = await res.json();

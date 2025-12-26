@@ -76,22 +76,27 @@ TOPIC_PATTERNS = [
 BUY_PAT = r"(mua|đặt|chốt|ship|giao|cod|thanh toán|giá|ưu đãi|link|đơn hàng)"
 OK_PAT = r"^(ok|oke|được|chốt|mua|lấy|đặt|gửi link|gửi đơn|tư vấn 1-1)$"
 
-# ---------- Simple memory (per visitor via cookie id) ----------
+
+# ---------- Simple memory (per session id) ----------
+# Ưu tiên session_id từ frontend (body JSON), fallback cookie sid.
 _MEM = {}
 
-def _sid():
-    sid = request.cookies.get("sid")
-    if sid:
-        return sid
-    # fallback: simple fingerprint
+def _sid_fallback():
     ip = request.headers.get("x-forwarded-for", request.remote_addr) or "0"
-    ua = request.headers.get("user-agent","")[:40]
+    ua = (request.headers.get("user-agent", "") or "")[:40]
     return f"{hash(ip+ua)%10**10}"
 
-def _mem():
-    sid=_sid()
+def _mem(sid: str):
+    sid = (sid or "").strip() or _sid_fallback()
     if sid not in _MEM:
-        _MEM[sid]={"turns":0,"stage":"identify","topic":"","asked":0,"last_offer_topic":"","last_ctas":[]}
+        _MEM[sid] = {
+            "turns": 0,
+            "stage": "identify",
+            "topic": "",
+            "asked": 0,
+            "last_offer_topic": "",
+            "last_ctas": [],
+        }
     return _MEM[sid]
 
 def detect_topic(text: str):
@@ -258,7 +263,10 @@ def chat():
     if not msg:
         return jsonify({"reply":"Dạ anh/chị gửi giúp em nội dung cần tư vấn nhé 😊", "meta":{"stage":"identify","topic":"","ctas":[]}})
 
-    mem=_mem()
+    sid = ((data.get("session_id") or request.cookies.get("sid") or "").strip())
+    if not sid:
+        sid = _sid_fallback()
+    mem=_mem(sid)
     mem["turns"]=mem.get("turns",0)+1
 
     # topic detect (persist once found unless user switches)
@@ -307,8 +315,8 @@ def chat():
 
     resp = jsonify({"reply": reply, "meta": meta})
     # set sid cookie if missing
-    if not request.cookies.get("sid"):
-        resp.set_cookie("sid", _sid(), max_age=60*60*24*30, samesite="Lax")
+    if request.cookies.get("sid") != sid:
+        resp.set_cookie("sid", sid, max_age=60*60*24*30, samesite="Lax")
     return resp
 
 # Static files (css/js/img)
